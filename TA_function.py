@@ -1,7 +1,10 @@
 import pandas as pd
 import numpy as np
+import talib.abstract as ta
+import indicators as qtpylib
 
 def find_pivots(dataframe, pivot_range, min_percentage_change):
+    pd.set_option('future.no_silent_downcasting', True)
 
     df2 = dataframe.copy()
 
@@ -351,7 +354,7 @@ def find_pivots(dataframe, pivot_range, min_percentage_change):
 
 
 
-    cond_bull = (df2['pivot'] == 4) | (df2['pivot'] == 6)
+    """cond_bull = (df2['pivot'] == 4) | (df2['pivot'] == 6)
     bull_ob = df2.loc[cond_bull, ['pivotprice', 'pivot_body','idx']]
 
     rows_to_remove2 = []
@@ -369,7 +372,7 @@ def find_pivots(dataframe, pivot_range, min_percentage_change):
     OB_bull = bull_ob.drop(rows_to_remove2)
 
 
-    bull_ob['validate_till'].fillna(np.inf)
+    bull_ob['validate_till'].fillna(np.inf)"""
 
 
 
@@ -398,4 +401,102 @@ def find_pivots(dataframe, pivot_range, min_percentage_change):
 
 
 
-    return  fibos, divs,  bull_ob, OB_bull, peaks
+    return  fibos, divs,  peaks
+
+
+def market_cipher(self, dataframe) :
+    # dataframe['volume_rolling'] = dataframe['volume'].shift(14).rolling(14).mean()
+    #
+    osLevel = -60
+    obLevel = 50
+    ap = (dataframe['high'] + dataframe['low'] + dataframe['close']) / 3
+    esa = ta.EMA(ap, self.n1)
+    d = ta.EMA((ap - esa).abs(), self.n1)
+    ci = (ap - esa) / (0.015 * d)
+    tci = ta.EMA(ci, self.n2)
+
+    dataframe['wt1'] = tci
+    dataframe['wt2'] = ta.SMA(dataframe['wt1'], 4)
+
+    dataframe['wtOversold'] = dataframe['wt2'] <= osLevel
+    dataframe['wtOverbought'] = dataframe['wt2'] >= obLevel
+
+    dataframe['wtCrossUp'] = dataframe['wt2'] - dataframe['wt1'] <= 0
+    dataframe['wtCrossDown'] = dataframe['wt2'] - dataframe['wt1'] >= 0
+    dataframe['red_dot'] = qtpylib.crossed_above(dataframe['wt2'], dataframe['wt1'])
+    dataframe['green_dot'] = qtpylib.crossed_below(dataframe['wt2'], dataframe['wt1'])
+
+    period = 60
+    multi = 150
+    posy = 2.5
+
+    dataframe['mfirsi'] = (ta.SMA(
+        ((dataframe['close'] - dataframe['open']) / (dataframe['high'] - dataframe['low']) * multi), period)) - posy
+
+    return dataframe
+
+
+def calculate_vwma(prices: pd.DataFrame, window: int):
+    weighted_prices = prices['close'] * prices['tick_volume']
+    rolling_sum_volume = prices['tick_volume'].rolling(window=window).sum()
+    rolling_sum_weighted_prices = weighted_prices.rolling(window=window).sum()
+    vwma = rolling_sum_weighted_prices / rolling_sum_volume
+    return vwma
+
+
+def check_reaction(dataframe, lvl):
+    candle = dataframe['high'] - dataframe['low']
+    body = abs(dataframe['close'] - dataframe['open'])
+
+    SFP_hammer = (
+            (dataframe['low'] < lvl) &
+            (dataframe['close'] > lvl) &
+            (body < 0.33 * candle) &
+            (lvl <= dataframe[['close', 'open']].max(axis=1).rolling(20).min().shift(1)))
+
+    SFP_green = (
+            (dataframe['low'] < lvl) &
+            (dataframe['close'] > lvl) &
+            (dataframe['close'] > dataframe['open']) &
+            (dataframe['low'] <= dataframe['close'].rolling(10).min().shift(1)) &
+            (lvl <= dataframe[['close', 'open']].max(axis=1).rolling(20).min().shift(1)))
+    SFP_red = (
+            (dataframe['low'].shift(1) < lvl) &
+            (dataframe['close'].shift(1) > lvl) &
+            (dataframe['close'].shift(1) < dataframe['open'].shift(1)) &
+            (dataframe['close'] > dataframe['open']) &
+            (dataframe['close'] > lvl) &
+            (lvl <= dataframe[['close', 'open']].max(axis=1).rolling(20).min().shift(2)))
+    SFP_fakeout = (
+            (dataframe['close'].shift(1) < lvl) &
+            (dataframe['close'].shift(1) < dataframe['open'].shift(1)) &
+            (dataframe['close'] > lvl) &
+            (lvl <= dataframe[['close', 'open']].max(axis=1).rolling(20).min().shift(2)) &
+            (dataframe['close'] > dataframe['open']))
+
+    tma_wicks_long = ((dataframe['low'].shift(1) < lvl) & (dataframe['close'].shift(1) > lvl) & (
+                (dataframe['close'] > lvl) | (dataframe['low'].shift(1) < dataframe['low'])))
+    tma_long_fakeout = (
+    ((lvl < dataframe['close']) & (dataframe['open'].shift(1) > lvl) & (dataframe['close'].shift(1) < lvl)))
+
+    long_ha = (
+            ((dataframe['low'] < lvl) | (dataframe['low'].shift(1) < lvl)) &
+            (dataframe['ha_low'] > dataframe['ha_low'].shift(1)) &
+            (dataframe['close'] > lvl) &
+            (dataframe['low'].rolling(2).min() == dataframe['low'].rolling(20).min()))
+
+    long_green = (
+            (dataframe['close'].shift(1) < dataframe['open'].shift(1)) &
+            (dataframe['low'] < lvl) &
+            (dataframe['close'] > dataframe['open']) &
+            (dataframe['close'] > lvl) &
+            (dataframe['low'].rolling(2).min() == dataframe['low'].rolling(20).min()))
+
+    long_wicks = (
+            (tma_wicks_long) &
+            (dataframe['low'].rolling(2).min() == dataframe['low'].rolling(20).min()))
+
+    long_fko = (tma_long_fakeout &
+                (dataframe['low'].rolling(2).min() == dataframe['low'].rolling(20).min()))
+
+    return SFP_hammer + SFP_green + SFP_red + SFP_fakeout + long_ha + long_green + long_wicks + long_fko

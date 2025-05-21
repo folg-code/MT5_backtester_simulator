@@ -3,3 +3,4 @@ pandas
 matplotlib
 TA-Lib
 numpy
+datetime
