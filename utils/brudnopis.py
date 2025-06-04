@@ -271,3 +271,70 @@ if __name__ == "__main__":
 
         if config.SAVE_TRADES_CSV:
             trades.to_csv(f"trades_{config.SYMBOL}_{config.TIMEFRAME}.csv", index=False)
+
+
+def mark_zone_reactions(zone_type, timeframe, df, zones_df, direction, time_df_col: str = None, time_zone_col: str = None ):
+    """
+    Oznacza reakcje na strefy (FVG lub OB) w DataFrame świec.
+
+    Parametry:
+        df               - DataFrame OHLCV z kolumną 'idxx'
+        zones_df         - DataFrame z walidowanymi strefami (musi mieć kolumny: idxx, validate_till, low_boundary, high_boundary)
+        reaction_col_name - Nazwa kolumny do zapisania reakcji (np. 'bullish_fvg_reaction')
+        direction        - 'bullish' lub 'bearish'
+    """
+
+
+    # Inicjujemy kolumnę reakcji wartościami False
+    reaction_col = pd.Series(False, index=df.index)
+
+
+    if zone_type == 'POI':
+        if timeframe == "aditional":
+            df.columns = [
+                col if col == 'time_H1' else col.replace('_H1', '')
+                for col in df.columns
+            ]
+
+        for _, row in zones_df.iterrows():
+            if pd.isna(row['validate_till']):
+                continue
+
+            min_body_prev = df[['open', 'close']].min(axis=1).shift(1)
+            max_body_prev = df[['open', 'close']].max(axis=1).shift(1)
+            min_body_now = df[['open', 'close']].min(axis=1)
+            max_body_now = df[['open', 'close']].max(axis=1)
+
+            valid_range = (df[time_df_col] > row[time_zone_col]) & ((df[time_df_col] < row['validate_till_time']) | (row['validate_till_time'] == np.nan))
+
+            if direction == 'bullish':
+                reaction = ((min_body_prev < row['high_boundary']) &  (min_body_now > row['low_boundary']))
+                # świeca wchodzi w strefę
+
+            elif direction == 'bearish':
+                reaction = ((max_body_prev > row['low_boundary']) & (max_body_now < row['high_boundary']) )
+                # świeca wchodzi w strefę
+
+            else:
+                raise ValueError("direction must be 'bullish' or 'bearish'")
+
+            # Aktualizujemy tylko tam, gdzie jest reakcja i w valid_range
+            return reaction_col | (valid_range & reaction)
+    else:
+
+        min_body_prev = df[['open', 'close']].min(axis=1).shift(1)
+        max_body_prev = df[['open', 'close']].max(axis=1).shift(1)
+        min_body_now = df[['open', 'close']].min(axis=1)
+        max_body_now = df[['open', 'close']].max(axis=1)
+
+        if direction == 'bullish':
+            reaction_fibo = ((min_body_prev < zones_df['high_boundary']) & (min_body_now > zones_df['low_boundary']))
+            # świeca wchodzi w strefę
+
+        elif direction == 'bearish':
+            reaction_fibo = ((max_body_prev > zones_df['low_boundary']) & (max_body_now < zones_df['high_boundary']))
+        else:
+            raise ValueError("direction must be 'bullish' or 'bearish'")
+
+        # Aktualizujemy tylko tam, gdzie jest reakcja i w valid_range
+        return reaction_col | reaction_fibo

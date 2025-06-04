@@ -1,4 +1,6 @@
 import pandas as pd
+from pygments.lexers import q
+
 import TA_function as myTA
 import indicators as qtpylib
 import talib.abstract as ta
@@ -32,6 +34,8 @@ class Poi:
 
         bullish_fvg, bearish_fvg = myTA.detect_fvg(df, 1.3)
 
+
+
         bullish_fvg['zone_type'] = 'fvg'
         bullish_ob['zone_type'] = 'ob'
         bearish_fvg['zone_type'] = 'fvg'
@@ -63,26 +67,29 @@ class Poi:
         if 'time_x' in df.columns:
             df.rename(columns={'time_x': 'time'}, inplace=True)
 
-        df['bullish_fvg_reaction_H1'] = False
-        df['bullish_ob_reaction_H1'] = False
-        df['bearish_fvg_reaction_H1'] = False
-        df['bearish_ob_reaction_H1'] = False
-
-        df_H1 = df[['open_H1', 'high_H1', 'low_H1', 'close_H1', 'time_H1']].copy()
-
-
-
-
-        df['bullish_fvg_reaction_H1'] = myTA.mark_zone_reactions("aditional", df_H1, self.bullish_fvg_validated_H1, 'bullish_fvg_reaction_H1', 'bullish', 'time_H1', 'time','validate_till_time')
-        df['bullish_ob_reaction_H1'] = myTA.mark_zone_reactions("aditional", df_H1, self.bullish_ob_validated_H1, 'bullish_ob_reaction_H1', 'bullish', 'time_H1','time','validate_till_time')
-        df['bearish_fvg_reaction_H1'] = myTA.mark_zone_reactions("aditional", df_H1, self.bearish_fvg_validated_H1, 'bearish_fvg_reaction_H1', 'bearish', 'time_H1','time','validate_till_time')
-        df['bearish_ob_reaction_H1'] = myTA.mark_zone_reactions("aditional", df_H1, self.bearish_ob_validated_H1, 'bearish_ob_reaction_H1', 'bearish', 'time_H1', 'time','validate_till_time')
-
-        heikinashi = qtpylib.heikinashi(df)
-        df[['ha_open', 'ha_close', 'ha_high', 'ha_low']] = heikinashi[['open', 'close', 'high', 'low']]
-
         peaks, fibos, divs, bullish_ob, bearish_ob = myTA.find_pivots(df, 15, min_percentage_change=0.00001)
         df = pd.concat([df, peaks, fibos, divs], axis=1)
+
+        golden_pocket_bullish = pd.DataFrame({
+            'time': df['time'],
+            'low_boundary': df['fibo2_0660_15'],
+            'high_boundary': df['fibo2_0618_15']
+        })
+
+        golden_pocket_bearish = pd.DataFrame({
+            'time': df['time'],
+            'low_boundary': df['fibo2_0660_15_bear'],
+            'high_boundary': df['fibo2_0618_15_bear']
+        })
+
+        df['golden_pocket_bullish_reaction'] = False
+        df['golden_pocket_bearish_reaction'] = False
+
+        df['golden_pocket_bullish_reaction'] = myTA.mark_fibo_reactions(df, golden_pocket_bullish, 'bullish')
+        df['golden_pocket_bearish_reaction'] = myTA.mark_fibo_reactions(df, golden_pocket_bearish, 'bearish')
+
+
+        print(df[(df['golden_pocket_bullish_reaction']) | (df['golden_pocket_bearish_reaction'])])
 
 
 
@@ -105,22 +112,32 @@ class Poi:
         self.bearish_fvg_validated = bearish_zones_validated[bearish_zones_validated['zone_type'] == 'fvg'].copy()
         self.bearish_ob_validated = bearish_zones_validated[bearish_zones_validated['zone_type'] == 'ob'].copy()
 
-
-
-
         df['bullish_fvg_reaction'] = False
         df['bullish_ob_reaction'] = False
         df['bearish_fvg_reaction'] = False
         df['bearish_ob_reaction'] = False
 
+        df['bullish_fvg_reaction'] = myTA.mark_zone_reactions("normal", df, self.bullish_fvg_validated,  'bullish', 'time', 'time')
+        df['bullish_ob_reaction'] = myTA.mark_zone_reactions("normal", df, self.bullish_ob_validated, 'bullish', 'time', 'time')
+        df['bearish_fvg_reaction'] = myTA.mark_zone_reactions("normal", df, self.bearish_fvg_validated,  'bearish', 'time', 'time')
+        df['bearish_ob_reaction'] = myTA.mark_zone_reactions("normal", df, self.bearish_ob_validated,  'bearish', 'time', 'time')
+
+        df['bullish_fvg_reaction_H1'] = False
+        df['bullish_ob_reaction_H1'] = False
+        df['bearish_fvg_reaction_H1'] = False
+        df['bearish_ob_reaction_H1'] = False
+
+        df_H1 = df[['open_H1', 'high_H1', 'low_H1', 'close_H1', 'time_H1']].copy()
+
+        df['bullish_fvg_reaction_H1'] = myTA.mark_zone_reactions("aditional", df_H1, self.bullish_fvg_validated_H1,'bullish', 'time_H1', 'time')
+        df['bullish_ob_reaction_H1'] = myTA.mark_zone_reactions("aditional", df_H1, self.bullish_ob_validated_H1,'bullish', 'time_H1', 'time')
+        df['bearish_fvg_reaction_H1'] = myTA.mark_zone_reactions("aditional", df_H1, self.bearish_fvg_validated_H1,'bearish', 'time_H1', 'time')
+        df['bearish_ob_reaction_H1'] = myTA.mark_zone_reactions("aditional", df_H1, self.bearish_ob_validated_H1, 'bearish', 'time_H1', 'time')
 
 
 
-
-        df['bullish_fvg_reaction'] = myTA.mark_zone_reactions("normal", df, self.bullish_fvg_validated, 'bullish_fvg_reaction', 'bullish', 'time', 'time', 'validate_till_time')
-        df['bullish_ob_reaction'] = myTA.mark_zone_reactions("normal", df, self.bullish_ob_validated, 'bullish_ob_reaction', 'bullish', 'time', 'time', 'validate_till_time')
-        df['bearish_fvg_reaction'] = myTA.mark_zone_reactions("normal", df, self.bearish_fvg_validated, 'bearish_fvg_reaction', 'bearish', 'time', 'time', 'validate_till_time')
-        df['bearish_ob_reaction'] = myTA.mark_zone_reactions("normal", df, self.bearish_ob_validated, 'bearish_ob_reaction', 'bearish', 'time', 'time', 'validate_till_time')
+        heikinashi = qtpylib.heikinashi(df)
+        df[['ha_open', 'ha_close', 'ha_high', 'ha_low']] = heikinashi[['open', 'close', 'high', 'low']]
 
         self.n1 = 10
         self.n2 = 7
@@ -306,26 +323,22 @@ class Poi:
 
     def get_bullish_zones(self):
         return [
-            ("Bullish FVG", self.bullish_fvg_validated),
-            ("Bullish OB", self.bullish_ob_validated),
-            ("Bullish FVG H1", self.bullish_fvg_validated_H1),
-            ("Bullish OB H1", self.bullish_ob_validated_H1),
+            ("Bullish FVG H1", self.bullish_fvg_validated_H1, "rgba(76, 175, 80, 0.4)"),
+            ("Bullish OB H1", self.bullish_ob_validated_H1, "rgba(56, 142, 60, 0.4)"),
         ]
 
     def get_bearish_zones(self):
         return [
-            ("Bearish FVG", self.bearish_fvg_validated),
-            ("Bearish OB", self.bearish_ob_validated),
-            #("Bearish FVG H1", self.bearish_fvg_validated_H1),
-            ("Bearish OB H1", self.bearish_ob_validated_H1),
+            ("Bearish FVG H1", self.bearish_fvg_validated_H1, "rgba(183, 28, 28, 0.4)"),
+            ("Bearish OB H1", self.bearish_ob_validated_H1, "rgba(198, 40, 40, 0.4)"),
         ]
 
     def get_extra_values_to_plot(self):
         return [
-            ("rma_33_low", self.df["rma_33_low_H1"]),
-            ("rma_33_high", self.df["rma_33_high_H1"]),
-            ("rma_144_low", self.df["rma_144_low_H1"]),
-            ("rma_144_high", self.df["rma_144_high_H1"]),
+            ("fibo2_0660_15", self.df["fibo2_0660_15"], "blue", "dash"),
+            ("fibo2_0618_15", self.df["fibo2_0618_15"], "blue", "dot"),
+            ("fibo2_0660_15_bear", self.df["fibo2_0660_15_bear"], "red", "dash"),
+            ("fibo2_0618_15_bear", self.df["fibo2_0618_15_bear"], "red", "dot"),
         ]
 
     def run(self) -> pd.DataFrame:

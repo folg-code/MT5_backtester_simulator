@@ -147,12 +147,19 @@ def plot_trades_with_indicators(df, trades, bullish_zones=None, bearish_zones=No
 
     #Średnie itd
     if extra_series:
-        for name, series in extra_series:
+        for extra in extra_series:
+            if len(extra) == 4:
+                name, series, color, dash = extra
+                line_style = dict(color=color, dash=dash)
+            else:
+                name, series = extra[:2]
+                line_style = dict()
             fig.add_trace(go.Scatter(
-                x=df['time'],  # albo inna kolumna z czasem
+                x=df['time'],
                 y=series,
                 mode='lines',
-                name=name
+                name=name,
+                line=line_style
             ))
 
     # Strefy
@@ -169,21 +176,23 @@ def plot_trades_with_indicators(df, trades, bullish_zones=None, bearish_zones=No
         'bear_fvg_H1': 'rgba(183, 28, 28, 0.4)',  # ciemniejszy czerwony
         'bear_ob_H1': 'rgba(198, 40, 40, 0.4)',}
 
+    # BULLISH ZONES
     if bullish_zones is not None:
-        for zone_name, zone_df in bullish_zones:
+        for zone in bullish_zones:
+            if len(zone) == 3:
+                zone_name, zone_df, fillcolor = zone
+            else:
+                zone_name, zone_df = zone
+                fillcolor = 'rgba(144, 245, 154, 0.8)'  # default
             if zone_df.empty:
                 continue
-            fillcolor = bullish_colors.get(zone_name, 'rgba(144, 245, 154, 0.8)')
             for _, row in zone_df.iterrows():
-                x0 = row['time']  # start time (datetime)
+                x0 = row['time']
                 x1 = row['validate_till_time'] if pd.notna(row['validate_till_time']) else df['time'].iloc[-1]
-
                 fig.add_shape(
                     type='rect',
-                    x0=x0,
-                    x1=x1,
-                    y0=row['low_boundary'],
-                    y1=row['high_boundary'],
+                    x0=x0, x1=x1,
+                    y0=row['low_boundary'], y1=row['high_boundary'],
                     fillcolor=fillcolor,
                     line=dict(width=0),
                     layer='below'
@@ -199,22 +208,23 @@ def plot_trades_with_indicators(df, trades, bullish_zones=None, bearish_zones=No
                     opacity=0.8
                 )
 
-    # Analogicznie dla bearish zones:
+    # BEARISH ZONES
     if bearish_zones is not None:
-        for zone_name, zone_df in bearish_zones:
+        for zone in bearish_zones:
+            if len(zone) == 3:
+                zone_name, zone_df, fillcolor = zone
+            else:
+                zone_name, zone_df = zone
+                fillcolor = 'rgba(255, 0, 0, 0.2)'  # default
             if zone_df.empty:
                 continue
-            fillcolor = bearish_colors.get(zone_name, 'rgba(255, 0, 0, 0.2)')
             for _, row in zone_df.iterrows():
                 x0 = row['time']
                 x1 = row['validate_till_time'] if pd.notna(row['validate_till_time']) else df['time'].iloc[-1]
-
                 fig.add_shape(
                     type='rect',
-                    x0=x0,
-                    x1=x1,
-                    y0=row['low_boundary'],
-                    y1=row['high_boundary'],
+                    x0=x0, x1=x1,
+                    y0=row['low_boundary'], y1=row['high_boundary'],
                     fillcolor=fillcolor,
                     line=dict(width=0),
                     layer='below'
@@ -234,6 +244,7 @@ def plot_trades_with_indicators(df, trades, bullish_zones=None, bearish_zones=No
                       xaxis_title='Czas',
                       yaxis_title='Cena',
                       xaxis_rangeslider_visible=False)
+
 
     """# Linie Asia High / Low
         fig.add_trace(go.Scatter(x=df['time'], y=df['asia_high'], mode='lines',

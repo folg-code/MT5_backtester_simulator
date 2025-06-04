@@ -63,7 +63,7 @@ if __name__ == "__main__":
         for strategy in all_strategies:
             symbol = strategy.symbol
             trades_symbol = trades_all[trades_all['symbol'] == symbol]
-            print("start")
+
             if not trades_symbol.empty:
                 plot_path = f"trades_plots/plots/{symbol}"
                 plot.plot_trades_with_indicators(
@@ -74,7 +74,7 @@ if __name__ == "__main__":
                     extra_series=strategy.get_extra_values_to_plot(),
                     save_path=plot_path
                 )
-            print("end")
+
         if config.SAVE_TRADES_CSV:
             output_folder = "trades_plots/trades"
             os.makedirs(output_folder, exist_ok=True)

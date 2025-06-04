@@ -8,7 +8,7 @@ strategy = "POI"
 SYMBOLS = ['USDJPY', 'EURUSD','GBPUSD']
 TIMEFRAME = 'M5'
 TIMERANGE = {
-    'start': '2025-05-21',
+    'start': '2025-05-11',
     'end': '2025-05-31'
 }
 # === Kapitał początkowy ===

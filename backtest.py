@@ -157,6 +157,8 @@ def _vectorized_backtest_single_symbol(df: pd.DataFrame, symbol: str, slippage: 
             last_exit = i
 
     trades_df = pd.DataFrame(trades)
+
+
     trades_df = trades_df.sort_values(by='exit_time')
 
     return trades_df
