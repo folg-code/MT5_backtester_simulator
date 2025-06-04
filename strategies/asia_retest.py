@@ -105,6 +105,8 @@ class AsiaRetest:
         if 'time_x' in df.columns:
             df.rename(columns={'time_x': 'time'}, inplace=True)
 
+
+
         df['breakout_occurred'] = False
         df['london_asia_liq_breakout'] = False
         df['time'] = pd.to_datetime(df['time'])
@@ -161,8 +163,15 @@ class AsiaRetest:
         df['tma_low_bands'] = df['bands'] - (2 * df['atr_tma'])
         df['tma_high_bands'] = df['bands'] + (2 * df['atr_tma'])
 
-        peaks10, fibos10, divs10 = myTA.find_pivots(df, 10, min_percentage_change=0.001)
+        peaks10, fibos10, divs10, bullish_ob, bearish_ob = myTA.find_pivots(df, 20, min_percentage_change=0.001)
         df = pd.concat([df, peaks10, fibos10, divs10], axis=1)
+
+        bullish_fvg, bearish_fvg = myTA.detect_fvg(df, 1.5)
+
+        self.bullish_fvg_validated = myTA.validate_fvg(bullish_fvg, price_col='low', idx_col='idx',direction='bullish')
+        self.bearish_fvg_validated = myTA.validate_fvg(bearish_fvg, price_col='high', idx_col='idx', direction='bearish')
+        self.bullish_ob_validated = myTA.validate_orderblocks(bullish_ob, price_col='pivot_body', idx_col='idx',direction='bullish')
+        self.bearish_ob_validated = myTA.validate_orderblocks(bearish_ob, price_col='pivotprice', idx_col='idx', direction='bearish')
 
 
         self.df = df

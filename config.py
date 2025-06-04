@@ -2,28 +2,29 @@ import MetaTrader5 as mt5
 
 
 # ====== Strategia =====
-strategy = "asia_retest"
+strategy = "POI"
 
 # === Parametry rynku ===
-SYMBOL = 'GBPUSD'
+SYMBOLS = ['USDJPY', 'EURUSD','GBPUSD']
 TIMEFRAME = 'M5'
 TIMERANGE = {
-    'start': '2025-02-01',
-    'end': '2025-05-28'
+    'start': '2025-05-21',
+    'end': '2025-05-31'
 }
 # === Kapitał początkowy ===
 INITIAL_BALANCE = 100_000.0  # USD
 # === Parametry strategii ===
 SLIPPAGE = 0.000
-SL_PCT = 0.002     # SL = 0.1%
-TP_PCT = 0.006     # TP = 0.2%
+SL_PCT = 0.0015     # SL = 0.1%
+TP_PCT = 0.003    # TP = 0.2%
 INITIAL_SIZE = 1.0 * INITIAL_BALANCE
 MAX_SIZE = 3.0
 
 # Czy używać niestandardowych SL/TP (np. na bazie ATR)
-USE_CUSTOM_SL_TP = True
+USE_CUSTOM_SL_TP = False
 # === Inne opcje ===
 PLOT_TRADES = True
+PLOT_EACH_SYMBOL = True
 SAVE_TRADES_CSV = True
 
 TICK_VALUE = 10  # Dla EURUSD 1 lot = $10/pips
