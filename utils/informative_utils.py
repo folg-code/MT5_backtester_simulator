@@ -5,7 +5,6 @@ import MetaTrader5 as mt5
 from utils.decorators import informative  # ← jeśli masz taką funkcję
 
 def pandas_freq_from_timeframe(tf: str) -> str:
-    # Przykładowa mapka, dostosuj do swoich timeframe'ów
     mapping = {
         'H1': '1h',
         'H4': '4h',
@@ -13,28 +12,50 @@ def pandas_freq_from_timeframe(tf: str) -> str:
         'M1': '1min',
         'M5': '5min',
         'M15': '15min',
-        # inne...
     }
-    return mapping.get(tf.upper(), tf)  # jeśli brak mapy, zwróć oryginał
+    return mapping.get(tf.upper(), tf)
+
 
 def get_informative_dataframe(symbol, timeframe: str, startup_candle_count: int) -> pd.DataFrame:
     freq = pandas_freq_from_timeframe(timeframe)
     tf_minutes = pd.to_timedelta(freq).total_seconds() / 60
     extra_minutes = tf_minutes * startup_candle_count
-    start_time = pd.to_datetime(config.TIMERANGE['start']) - pd.to_timedelta(extra_minutes, unit='m')
+    start_time = pd.to_datetime(config.TIMERANGE['start'], utc=True) - pd.to_timedelta(extra_minutes, unit='m')
+    end_time = pd.to_datetime(config.TIMERANGE['end'], utc=True)
 
-    return get_data(
+    df = get_data(
         symbol,
         getattr(mt5, f"TIMEFRAME_{timeframe}"),
         start_time,
-        pd.to_datetime(config.TIMERANGE['end'])
+        end_time
     )
+
+    # Zapewnij, że 'time' ma strefę UTC
+    if df['time'].dt.tz is None:
+        df['time'] = df['time'].dt.tz_localize('UTC')
+    else:
+        df['time'] = df['time'].dt.tz_convert('UTC')
+
+    return df
 
 
 def merge_informative_data(df: pd.DataFrame, timeframe: str, informative_df: pd.DataFrame) -> pd.DataFrame:
     freq = pandas_freq_from_timeframe(timeframe)
     time_col = f'time_{timeframe}'
+
+    # Zapewnij, że df['time'] ma strefę UTC
+    if df['time'].dt.tz is None:
+        df['time'] = df['time'].dt.tz_localize('UTC')
+    else:
+        df['time'] = df['time'].dt.tz_convert('UTC')
+
     df[time_col] = df['time'].dt.floor(freq)
+
+    # Upewnij się, że informative_df['time'] ma strefę UTC
+    if informative_df['time'].dt.tz is None:
+        informative_df['time'] = informative_df['time'].dt.tz_localize('UTC')
+    else:
+        informative_df['time'] = informative_df['time'].dt.tz_convert('UTC')
 
     informative_df = informative_df.rename(columns={
         col: f"{col}_{timeframe}" for col in informative_df.columns if col != 'time'

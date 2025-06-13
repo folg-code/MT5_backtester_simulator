@@ -11,7 +11,7 @@ def plot_equity(trades_df):
     if 'capital' not in trades_df.columns:
         raise ValueError("Brakuje kolumny 'capital' – oblicz ją najpierw (np. przez compute_equity()).")
 
-    pd.set_option('display.max_rows', None)
+    
 
 
 
@@ -78,19 +78,17 @@ def add_zone(fig, row, df, label, fillcolor, font_color):
     )
 
 
-def plot_trades_with_indicators(df, trades, bullish_zones=None, bearish_zones=None, extra_series=None, save_path=None ):
+def plot_trades_with_indicators(df, trades, bullish_zones=None, bearish_zones=None, extra_series=None, bool_series=None, save_path=None):
     fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
-                        vertical_spacing=0.02, row_heights=[0.7, 0.3])
+                        vertical_spacing=0.02, row_heights=[0.9, 0.1])
 
-    # Świece
+    # Heikin-Ashi Świece
     fig.add_trace(go.Candlestick(x=df['time'],
                                  open=df['open'],
                                  high=df['high'],
                                  low=df['low'],
                                  close=df['close'],
-                                 name='Świece'), row=1, col=1)
-
-
+                                 name='candlestick'), row=1, col=1)
 
     # Transakcje
     shown_legend = {"Entry": False, "custom_SL": False, "custom_TP": False, "manual_exit": False}
@@ -135,7 +133,7 @@ def plot_trades_with_indicators(df, trades, bullish_zones=None, bearish_zones=No
         )
         shown_legend[legend_key] = True
 
-        # Przerywana linia między ENTRY a EXIT
+        # Linia między ENTRY a EXIT
         fig.add_trace(go.Scatter(
             x=[trade['entry_time'], trade['exit_time']],
             y=[trade['entry_price'], trade['exit_price']],
@@ -145,7 +143,7 @@ def plot_trades_with_indicators(df, trades, bullish_zones=None, bearish_zones=No
             hoverinfo='skip'
         ))
 
-    #Średnie itd
+    # Średnie, linie itd.
     if extra_series:
         for extra in extra_series:
             if len(extra) == 4:
@@ -155,124 +153,150 @@ def plot_trades_with_indicators(df, trades, bullish_zones=None, bearish_zones=No
                 name, series = extra[:2]
                 line_style = dict()
             fig.add_trace(go.Scatter(
-                x=df['time'],
+                x=df['time'].shift(20),
                 y=series,
                 mode='lines',
                 name=name,
                 line=line_style
             ))
 
-    # Strefy
-    bullish_colors = {
-        'bull_fvg': 'rgba(144, 245, 154, 0.2)',  # jaśniejszy zielony
-        'bull_ob': 'rgba(76, 175, 80, 0.2)',
-        'bull_fvg_H1': 'rgba(76, 175, 80, 0.4)',  # ciemniejszy zielony
-        'bull_ob_H1': 'rgba(56, 142, 60, 0.4)',
-    }
-
-    bearish_colors = {
-        'bear_fvg': 'rgba(255, 0, 0, 0.2)',  # jaśniejszy czerwony
-        'bear_ob': 'rgba(255, 50, 50, 0.2)',
-        'bear_fvg_H1': 'rgba(183, 28, 28, 0.4)',  # ciemniejszy czerwony
-        'bear_ob_H1': 'rgba(198, 40, 40, 0.4)',}
-
-    # BULLISH ZONES
+    # BULLISH ZONES z legendą
     if bullish_zones is not None:
         for zone in bullish_zones:
             if len(zone) == 3:
                 zone_name, zone_df, fillcolor = zone
             else:
                 zone_name, zone_df = zone
-                fillcolor = 'rgba(144, 245, 154, 0.8)'  # default
+                fillcolor = 'rgba(255, 152, 0, 0.4)'  # pomarańcz (FVG) lub domyślny
             if zone_df.empty:
                 continue
-            for _, row in zone_df.iterrows():
+            for i, (_, row) in enumerate(zone_df.iterrows()):
                 x0 = row['time']
                 x1 = row['validate_till_time'] if pd.notna(row['validate_till_time']) else df['time'].iloc[-1]
-                fig.add_shape(
-                    type='rect',
-                    x0=x0, x1=x1,
-                    y0=row['low_boundary'], y1=row['high_boundary'],
+                y0 = row['low_boundary']
+                y1 = row['high_boundary']
+                fig.add_trace(go.Scatter(
+                    x=[x0, x1, x1, x0, x0],
+                    y=[y0, y0, y1, y1, y0],
+                    fill='toself',
                     fillcolor=fillcolor,
                     line=dict(width=0),
-                    layer='below'
-                )
-                fig.add_annotation(
-                    x=x0,
-                    y=row['high_boundary'],
-                    text=zone_name,
-                    showarrow=False,
-                    yshift=10,
-                    font=dict(color="green"),
-                    bgcolor="white",
-                    opacity=0.8
-                )
+                    mode='lines',
+                    name=zone_name if i == 0 else None,
+                    showlegend=(i == 0),
+                    opacity=0.4,
+                    hoverinfo='skip'
+                ), row=1, col=1)
 
-    # BEARISH ZONES
+    # BEARISH ZONES z legendą
     if bearish_zones is not None:
         for zone in bearish_zones:
             if len(zone) == 3:
                 zone_name, zone_df, fillcolor = zone
             else:
                 zone_name, zone_df = zone
-                fillcolor = 'rgba(255, 0, 0, 0.2)'  # default
+                fillcolor = 'rgba(33, 150, 243, 0.4)'  # niebieski (BB) lub domyślny
             if zone_df.empty:
                 continue
-            for _, row in zone_df.iterrows():
+            for i, (_, row) in enumerate(zone_df.iterrows()):
                 x0 = row['time']
                 x1 = row['validate_till_time'] if pd.notna(row['validate_till_time']) else df['time'].iloc[-1]
-                fig.add_shape(
-                    type='rect',
-                    x0=x0, x1=x1,
-                    y0=row['low_boundary'], y1=row['high_boundary'],
+                y0 = row['low_boundary']
+                y1 = row['high_boundary']
+                fig.add_trace(go.Scatter(
+                    x=[x0, x1, x1, x0, x0],
+                    y=[y0, y0, y1, y1, y0],
+                    fill='toself',
                     fillcolor=fillcolor,
                     line=dict(width=0),
-                    layer='below'
-                )
-                fig.add_annotation(
-                    x=x0,
-                    y=row['high_boundary'],
-                    text=zone_name,
-                    showarrow=False,
-                    yshift=10,
-                    font=dict(color="red"),
-                    bgcolor="white",
-                    opacity=0.8
-                )
+                    mode='lines',
+                    name=zone_name if i == 0 else None,
+                    showlegend=(i == 0),
+                    opacity=0.4,
+                    hoverinfo='skip'
+                ), row=1, col=1)
 
-    fig.update_layout(title='Wykres transakcji z wskaźnikami',
-                      xaxis_title='Czas',
-                      yaxis_title='Cena',
-                      xaxis_rangeslider_visible=False)
+    # Dolny pasek z binarną serią
+    if bool_series:
+        for name, bool_series, color in bool_series:
+            if bool_series is None or not isinstance(bool_series, pd.Series):
+                continue
+            bar_y = bool_series.astype(int)
+            fig.add_trace(go.Bar(
+                x=df['time'],
+                y=bar_y,
+                name=name,
+                marker_color=color,
+                opacity=0.6,
+            ), row=2, col=1)
 
+    # Linie pomocnicze z pivotów (HH, LL, LH, HL)
+    if 'pivot_15' in df.columns:
+        pivot_map = {
+            3: {'color': 'red',   'label': 'HH'},
+            4: {'color': 'green', 'label': 'LL'},
+            5: {'color': 'red',   'label': 'LH'},
+            6: {'color': 'green', 'label': 'HL'},
+        }
 
-    """# Linie Asia High / Low
-        fig.add_trace(go.Scatter(x=df['time'], y=df['asia_high'], mode='lines',
-                                 line=dict(color='green', dash='dash'), name='Asia High'))
-        fig.add_trace(go.Scatter(x=df['time'], y=df['asia_low'], mode='lines',
-                                 line=dict(color='red', dash='dash'), name='Asia Low'))
+    low_rolling_min = df['low'].rolling(16).min()
+    high_rolling_max = df['high'].rolling(16).max()
 
-        # Linie pionowe o 9:00 i 11:00
-        for current_date in df['time'].dt.date.unique():
-            for hour in [9, 11]:
-                time_point = pd.Timestamp(f"{current_date} {hour:02d}:00:00")
-                if time_point in df['time'].values:
-                    fig.add_shape(
-                        type='line',
-                        x0=time_point, x1=time_point,
-                        y0=df['low'].min(), y1=df['high'].max(),
-                        line=dict(color="blue", dash="dash"),
-                        xref='x', yref='y'
-                    )"""
-    # Na końcu funkcji:
+        # Użyj rolling wartości w pętli
+    for i, row in df.reset_index(drop=True).iterrows():
+        pivot_val = row['pivot_15']
+        if pivot_val in pivot_map:
+            info = pivot_map[pivot_val]
+            start_idx = max(i - 15, 0)
+            end_idx = min(start_idx + 30, len(df) - 1)
+
+            x_values = [df['time'].iloc[start_idx], df['time'].iloc[end_idx]]
+
+            if pivot_val == 3:
+                y_value = row['HH_15']
+            elif pivot_val == 4:
+                y_value = row['LL_15']
+            elif pivot_val == 5:
+                y_value = row['LH_15']
+            elif pivot_val == 6:
+                y_value = row['HL_15']
+
+            if pd.isna(y_value):
+                continue  # pomiń jeśli rolling wartość nie istnieje
+
+            fig.add_trace(go.Scatter(
+                x=x_values,
+                y=[y_value, y_value],
+                mode='lines+text',
+                line=dict(color=info['color'], width=1.5, dash='dash'),
+                name=info['label'],
+                text=[info['label'], None],
+                textposition='top right',
+                showlegend=False,
+                hoverinfo='text'
+            ), row=1, col=1)
+    else:
+        print("no pivot")
+
+    fig.update_layout(
+        title='Wykres z transakcjami i strefami',
+        xaxis_title='Czas',
+        yaxis_title='Cena',
+        xaxis_rangeslider_visible=False,
+        height=800
+    )
+
     if save_path:
         folder = os.path.dirname(save_path)
         if folder and not os.path.exists(folder):
             os.makedirs(folder, exist_ok=True)
-
-        if not save_path.lower().endswith(".html"):
-            save_path += ".html"
-
-        fig.write_html(save_path)
+        try:
+            fig.write_image(save_path)
+            print(f"Wykres zapisany do {save_path}")
+        except Exception as e:
+            print(f"Nie udało się zapisać PNG: {e}")
+            html_path = save_path.rsplit('.', 1)[0] + ".html"
+            fig.write_html(html_path)
+            print(f"Wykres zapisany jako HTML do {html_path}")
     else:
         fig.show(renderer="browser")

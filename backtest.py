@@ -4,77 +4,88 @@ import config
 
 
 def vectorized_backtest(df: pd.DataFrame, symbol: str, slippage: float,
-                        sl_pct: float, tp_pct: float, initial_size: float, max_size: float) -> pd.DataFrame:
-    # Jeśli symbol jest podany, robimy tylko dla jednego symbolu (oryginalne działanie)
+                        sl_pct: float, tp_pct: float, initial_size: float,
+                        max_size: float, SINGLE_POSIOTION_MODE: bool ) -> pd.DataFrame:
     if symbol is not None:
-        return _vectorized_backtest_single_symbol(df, symbol, slippage, sl_pct, tp_pct, initial_size, max_size)
+        return _vectorized_backtest_single_symbol(df, symbol, slippage, sl_pct, tp_pct, initial_size, max_size, SINGLE_POSIOTION_MODE)
 
-    # Jeśli symbol == None, oczekujemy kolumny 'symbol' w df i robimy backtest dla każdego osobno
     all_trades = []
     for sym, group_df in df.groupby('symbol'):
-        trades = _vectorized_backtest_single_symbol(group_df, sym, slippage, sl_pct, tp_pct, initial_size, max_size)
+        trades = _vectorized_backtest_single_symbol(group_df, sym, slippage, sl_pct, tp_pct, initial_size, max_size, SINGLE_POSIOTION_MODE)
         all_trades.append(trades)
-    if all_trades:
-        return pd.concat(all_trades).sort_values(by='exit_time')
-    else:
-        return pd.DataFrame()  # pusty df jeśli brak danych
-
+    return pd.concat(all_trades).sort_values(by='exit_time') if all_trades else pd.DataFrame()
 
 def _vectorized_backtest_single_symbol(df: pd.DataFrame, symbol: str, slippage: float,
                                        sl_pct: float, tp_pct: float, initial_size: float,
-                                       max_size: float) -> pd.DataFrame:
+                                       max_size: float, SINGLE_POSIOTION_MODE: bool) -> pd.DataFrame:
     df = df.copy()
     trades = []
+    df = df.reset_index(drop=False)
+
 
     for direction in ['long', 'short']:
-        entries = df[df['signal'].apply(lambda x: isinstance(x, tuple) and x[0] == 'enter' and x[1] == direction)].index
-        exits = df[df['signal'].apply(lambda x: isinstance(x, tuple) and x[0] == 'exit' and x[1] == direction)].index
+        entries_idx = df[df['signal'].apply(lambda x: isinstance(x, tuple) and x[0] == 'enter' and x[1] == direction)]['index'].tolist()
+        exits_idx = df[df['signal'].apply(lambda x: isinstance(x, tuple) and x[0] == 'exit' and x[1] == direction)]['index'].tolist()
 
-        last_exit = -1
+        entries_pos = [df.index[df['index'] == idx][0] for idx in entries_idx]
+        exits_pos = [df.index[df['index'] == idx][0] for idx in exits_idx]
 
-        for entry_idx in entries:
-            if entry_idx <= last_exit:
+        active_tags = set()
+
+        for entry_pos in entries_pos:
+            signal = df.loc[entry_pos, 'signal']
+            
+            if isinstance(signal, tuple):
+                if len(signal) >= 5:
+                    _, _, enter_tag, custom_sl, custom_tp = signal[:5]
+                    sl_exit_tag = signal[5] if len(signal) > 5 else "custom_SL"
+                    tp_exit_tag = signal[6] if len(signal) > 6 else "custom_TP"
+                else:
+                    _, _, enter_tag = signal[:3] if len(signal) >= 3 else ('', '', 'empty')
+                    custom_sl = None
+                    custom_tp = None
+                    sl_exit_tag = "SL"
+                    tp_exit_tag = "TP"
+            else:
                 continue
 
-            signal = df.loc[entry_idx, 'signal']
+            print(active_tags)
 
-            if len(signal) >= 5:
-                _, _, enter_tag, custom_sl, custom_tp = signal[:5]
-                sl_exit_tag = signal[5] if len(signal) > 5 else "custom_SL"
-                tp_exit_tag = signal[6] if len(signal) > 6 else "custom_TP"
-            else:
-                _, _, enter_tag = signal if len(signal) >= 3 else ('', '', '')
-                custom_sl = None
-                custom_tp = None
-                sl_exit_tag = "SL"
-                tp_exit_tag = "TP"
+            if enter_tag in active_tags:
+                continue  # nie otwieraj drugiej pozycji z tym samym tagiem
 
-            entry_price = df.loc[entry_idx, 'close'] * (1 + slippage) if direction == 'long' else df.loc[
-                                                                                                      entry_idx, 'close'] * (
-                                                                                                              1 - slippage)
+            
+            entry_price = df.loc[entry_pos, 'close'] * (1 + slippage) if direction == 'long' else df.loc[entry_pos, 'close'] * (1 - slippage)
 
-            if config.USE_CUSTOM_SL_TP and custom_sl is not None and custom_tp is not None:
+            active_tags.add(enter_tag)  # <-- dodaj aktywny tag tylko po otwarciu
+
+            use_custom = False
+            try:
+                import config
+                use_custom = config.USE_CUSTOM_SL_TP
+            except ImportError:
+                pass
+
+            if use_custom and custom_sl is not None and custom_tp is not None:
                 sl = custom_sl
                 tp = custom_tp
             else:
                 sl = entry_price * (1 - sl_pct if direction == 'long' else 1 + sl_pct)
                 tp = entry_price * (1 + tp_pct if direction == 'long' else 1 - tp_pct)
-                sl_exit_tag = "SL"
-                tp_exit_tag = "TP"
 
             position_size = initial_size
             avg_entry_price = entry_price
-            entry_time = df.loc[entry_idx, 'time']
+            entry_time = df.loc[entry_pos, 'time']
             exit_price = None
             exit_time = None
             exit_reason = None
             pnl_total = 0
 
-            for i in range(entry_idx + 1, len(df)):
+            for i in range(entry_pos + 1, len(df)):
                 row = df.iloc[i]
                 price_close = row['close']
                 price_high = row['high']
-                price_low = row['low']
+                price_low = row[['close', 'open']].min()
                 time = row['time']
 
                 scale = row.get('scaling', None)
@@ -85,20 +96,16 @@ def _vectorized_backtest_single_symbol(df: pd.DataFrame, symbol: str, slippage: 
                 if scale_signal == 1 and position_size < max_size:
                     add_size = min(initial_size, max_size - position_size)
                     if add_size > 0:
-                        add_price = price_close * (1 + slippage) if direction == 'long' else price_close * (
-                                    1 - slippage)
-                        avg_entry_price = (avg_entry_price * position_size + add_price * add_size) / (
-                                    position_size + add_size)
+                        add_price = price_close * (1 + slippage) if direction == 'long' else price_close * (1 - slippage)
+                        avg_entry_price = (avg_entry_price * position_size + add_price * add_size) / (position_size + add_size)
                         position_size += add_size
                         sl = avg_entry_price * (1 - sl_pct) if direction == 'long' else avg_entry_price * (1 + sl_pct)
                         tp = avg_entry_price * (1 + tp_pct) if direction == 'long' else avg_entry_price * (1 - tp_pct)
 
                 if scale_signal == -1 and position_size > initial_size:
                     reduce_size = min(initial_size, position_size)
-                    exit_price_part = price_close * (1 - slippage) if direction == 'long' else price_close * (
-                                1 + slippage)
-                    pnl_part = (exit_price_part - avg_entry_price) * reduce_size if direction == 'long' else (
-                                                                                                                         avg_entry_price - exit_price_part) * reduce_size
+                    exit_price_part = price_close * (1 - slippage) if direction == 'long' else price_close * (1 + slippage)
+                    pnl_part = (exit_price_part - avg_entry_price) * reduce_size if direction == 'long' else (avg_entry_price - exit_price_part) * reduce_size
                     position_size -= reduce_size
                     pnl_total += pnl_part
 
@@ -124,21 +131,22 @@ def _vectorized_backtest_single_symbol(df: pd.DataFrame, symbol: str, slippage: 
                     exit_reason = tp_exit_tag
                     break
 
-                if i in exits:
+                if df.loc[i, 'index'] in exits_idx:
                     exit_price = price_close * (1 - slippage) if direction == 'long' else price_close * (1 + slippage)
                     exit_time = time
                     exit_reason = 'manual_exit'
                     break
 
             if exit_price is None:
-                exit_price = df.iloc[-1]['close'] * (1 - slippage) if direction == 'long' else df.iloc[-1]['close'] * (
-                            1 + slippage)
+                exit_price = df.iloc[-1]['close'] * (1 - slippage) if direction == 'long' else df.iloc[-1]['close'] * (1 + slippage)
                 exit_time = df.iloc[-1]['time']
                 exit_reason = 'end_of_data'
 
-            pnl_final = (exit_price - avg_entry_price) * position_size if direction == 'long' else (
-                                                                                                               avg_entry_price - exit_price) * position_size
+            pnl_final = (exit_price - avg_entry_price) * position_size if direction == 'long' else (avg_entry_price - exit_price) * position_size
             pnl_total += pnl_final
+
+            # na koniec zamknięcia pozycji
+            active_tags.discard(enter_tag)
 
             trades.append({
                 'symbol': symbol,
@@ -154,11 +162,4 @@ def _vectorized_backtest_single_symbol(df: pd.DataFrame, symbol: str, slippage: 
                 'exit_tag': exit_reason,
             })
 
-            last_exit = i
-
-    trades_df = pd.DataFrame(trades)
-
-
-    trades_df = trades_df.sort_values(by='exit_time')
-
-    return trades_df
+    return pd.DataFrame(trades)

@@ -44,12 +44,10 @@ if __name__ == "__main__":
         config.SL_PCT,
         config.TP_PCT,
         config.INITIAL_SIZE,
-        config.MAX_SIZE
+        config.MAX_SIZE,
+        config.SINGLE_POSIOTION_MODE,
     )
 
-    pd.set_option('display.max_rows', None)  # Pokaż wszystkie wiersze
-    pd.set_option('display.max_columns', None)  # Pokaż wszystkie kolumny
-    pd.set_option('display.width', None)  # Dopasuj szerokość do konsoli (bez łamania linii)
 
     if not trades_all.empty:
         trades_all = raport.compute_equity(trades_all)
@@ -72,6 +70,7 @@ if __name__ == "__main__":
                     bullish_zones=strategy.get_bullish_zones(),
                     bearish_zones=strategy.get_bearish_zones(),
                     extra_series=strategy.get_extra_values_to_plot(),
+                    bool_series= strategy.bool_series(),
                     save_path=plot_path
                 )
 

@@ -64,10 +64,21 @@ def print_group_stats(df, group_col, title):
         table.add_column(header, justify="center")
 
     grouped = df.groupby(group_col)
+
+    # Przygotuj listę statystyk grup, potem posortuj po 'Tot Profit USD' (index 3)
+    stats_list = []
     for name, group in grouped:
         stats = summarize_group(group, str(name))
+        stats_list.append(stats)
+
+    # Sortujemy malejąco po Total Profit USD (index 3)
+    stats_list.sort(key=lambda x: float(x[3]), reverse=True)
+
+    # Dodajemy posortowane wiersze
+    for stats in stats_list:
         table.add_row(*map(str, stats))
 
+    # Dodajemy sumę na końcu, pogrubioną
     total_stats = summarize_group(df)
     table.add_row(*map(str, total_stats), style="bold")
 

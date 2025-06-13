@@ -13,5 +13,5 @@ def get_data(symbol, timeframe, start_date, end_date):
         raise ValueError("Brak danych dla podanego zakresu dat.")
 
     df = pd.DataFrame(rates)
-    df['time'] = pd.to_datetime(df['time'], unit='s')
+    df['time'] = pd.to_datetime(df['time'], unit='s').dt.tz_localize('UTC')
     return df
