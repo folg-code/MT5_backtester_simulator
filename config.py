@@ -5,10 +5,10 @@ import MetaTrader5 as mt5
 strategy = "POI"
 
 # === Parametry rynku ===
-SYMBOLS = [ 'EURUSD', 'USDJPY']
+SYMBOLS = [ 'EURUSD', 'USDJPY', 'XAUUSD', 'AUDNZD']
 TIMEFRAME = 'M5'
 TIMERANGE = {
-    'start': '2025-02-10',
+    'start': '2025-02-12',
     'end': '2025-06-12'
 }
 # === Kapitał początkowy ===

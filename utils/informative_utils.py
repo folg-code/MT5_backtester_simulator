@@ -49,7 +49,7 @@ def merge_informative_data(df: pd.DataFrame, timeframe: str, informative_df: pd.
     else:
         df['time'] = df['time'].dt.tz_convert('UTC')
 
-    df[time_col] = df['time'].dt.floor(freq)
+    df[time_col] = df['time'].dt.tz_convert('UTC').dt.floor(freq)
 
     # Upewnij się, że informative_df['time'] ma strefę UTC
     if informative_df['time'].dt.tz is None:

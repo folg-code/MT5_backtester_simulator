@@ -1,0 +1,44 @@
+2025-06-17 10:40:44,355 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:40:45,356 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:40:46,357 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:40:47,358 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:40:48,359 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:40:49,360 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:40:50,361 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:40:51,362 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:40:52,363 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:40:53,364 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:41:06,166 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:41:07,166 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:41:08,168 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:41:09,169 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:41:10,170 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:41:11,171 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:41:12,172 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:41:13,173 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:41:14,174 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:41:15,174 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:41:16,175 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:41:17,176 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:43:44,799 - Zlecenie BUY nieudane: 10027
+2025-06-17 10:43:49,802 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:43:50,803 - Zlecenie BUY nieudane: 10027
+2025-06-17 10:43:55,806 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:43:56,806 - Zlecenie BUY nieudane: 10027
+2025-06-17 10:46:55,047 - Zlecenie BUY nieudane: 10027 | OrderSendResult(retcode=10027, deal=0, order=0, volume=0.0, price=0.0, bid=0.0, ask=0.0, comment='AutoTrading disabled by client', request_id=0, retcode_external=0, request=TradeRequest(action=1, magic=123456, order=0, symbol='USDJPY', volume=0.1, price=144.819, stoplimit=0.0, sl=0.0, tp=0.0, deviation=20, type=0, type_filling=1, type_time=0, expiration=0, comment='BUY z Python', position=0, position_by=0))
+2025-06-17 10:47:00,050 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:47:01,051 - Zlecenie BUY nieudane: 10027 | OrderSendResult(retcode=10027, deal=0, order=0, volume=0.0, price=0.0, bid=0.0, ask=0.0, comment='AutoTrading disabled by client', request_id=0, retcode_external=0, request=TradeRequest(action=1, magic=123456, order=0, symbol='USDJPY', volume=0.1, price=144.82, stoplimit=0.0, sl=0.0, tp=0.0, deviation=20, type=0, type_filling=1, type_time=0, expiration=0, comment='BUY z Python', position=0, position_by=0))
+2025-06-17 10:47:43,550 - Zlecenie BUY nieudane: 10027 | OrderSendResult(retcode=10027, deal=0, order=0, volume=0.0, price=0.0, bid=0.0, ask=0.0, comment='AutoTrading disabled by client', request_id=0, retcode_external=0, request=TradeRequest(action=1, magic=123456, order=0, symbol='USDJPY', volume=0.1, price=144.846, stoplimit=0.0, sl=0.0, tp=0.0, deviation=20, type=0, type_filling=2, type_time=0, expiration=0, comment='BUY z Python', position=0, position_by=0))
+2025-06-17 10:47:48,553 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:47:49,554 - Zlecenie BUY nieudane: 10027 | OrderSendResult(retcode=10027, deal=0, order=0, volume=0.0, price=0.0, bid=0.0, ask=0.0, comment='AutoTrading disabled by client', request_id=0, retcode_external=0, request=TradeRequest(action=1, magic=123456, order=0, symbol='USDJPY', volume=0.1, price=144.846, stoplimit=0.0, sl=0.0, tp=0.0, deviation=20, type=0, type_filling=2, type_time=0, expiration=0, comment='BUY z Python', position=0, position_by=0))
+2025-06-17 10:47:54,557 - Nie uda³o siê zamkn¹æ pozycji #3954482048: 10027
+2025-06-17 10:50:41,848 - Zlecenie BUY nieudane: 10027 | OrderSendResult(retcode=10027, deal=0, order=0, volume=0.0, price=0.0, bid=0.0, ask=0.0, comment='AutoTrading disabled by client', request_id=0, retcode_external=0, request=TradeRequest(action=1, magic=123456, order=0, symbol='USDJPY', volume=0.1, price=144.818, stoplimit=0.0, sl=0.0, tp=0.0, deviation=20, type=0, type_filling=2, type_time=0, expiration=0, comment='BUY z Python', position=0, position_by=0))
+2025-06-17 10:51:44,344 - Zlecenie BUY zrealizowane: #3958297325
+2025-06-17 10:51:49,397 - Zamkniêto pozycjê #3954482048 (BUY) z zyskiem -241.00
+2025-06-17 10:51:49,449 - Zamkniêto pozycjê #3958297325 (BUY) z zyskiem -2.14
+2025-06-17 10:51:50,500 - Zlecenie BUY zrealizowane: #3958297910
+2025-06-17 10:51:55,552 - Zamkniêto pozycjê #3958297910 (BUY) z zyskiem -1.38
+2025-06-17 10:51:56,605 - Zlecenie BUY zrealizowane: #3958298475
+2025-06-17 10:52:59,996 - Zlecenie BUY zrealizowane: #3958303113
+2025-06-17 10:54:22,001 - Zlecenie BUY zrealizowane: #3958310366
+2025-06-17 10:54:28,215 - Zlecenie BUY zrealizowane: #3958310864

@@ -13,11 +13,11 @@ def find_pivots(df2, pivot_range, min_percentage_change):
 
     ############################## DETECT PIVOTS ##############################
     local_high_price = (
-            (df2["high"].rolling(window=pivot_range).max().shift(pivot_range+1) < df2["high"].shift(pivot_range)) &
+            (df2["high"].rolling(window=pivot_range).max().shift(pivot_range+1) <= df2["high"].shift(pivot_range)) &
             (df2["high"].rolling(window=pivot_range).max() <= df2["high"].shift(pivot_range)))
     local_low_price = (
-            ((df2["low"].rolling(window=pivot_range).min()).shift(pivot_range+1) > df2["low"].shift(pivot_range)) &
-            (df2["low"].rolling(window=pivot_range).min() > df2["low"].shift(pivot_range)))
+            ((df2["low"].rolling(window=pivot_range).min()).shift(pivot_range+1) >= df2["low"].shift(pivot_range)) &
+            (df2["low"].rolling(window=pivot_range).min() >= df2["low"].shift(pivot_range)))
 
 
     df2.loc[local_high_price, 'pivotprice'] = df2['high'].shift(pivot_range)
@@ -26,8 +26,7 @@ def find_pivots(df2, pivot_range, min_percentage_change):
     df2.loc[local_high_price, 'pivot_body'] = (df2[['open', 'close']].max(axis=1).rolling(int(pivot_range)).max()).shift(int(pivot_range/2))
     df2.loc[local_low_price, 'pivot_body'] = (df2[['open', 'close']].min(axis=1).rolling(int(pivot_range)).min()).shift(int(pivot_range/2))
 
-    df2.loc[local_high_price, 'pivotprice_rsi'] = (df2['rsi'].rolling(int(pivot_range)).max()).shift(int(pivot_range/2))
-    df2.loc[local_low_price, 'pivotprice_rsi'] = (df2['rsi'].rolling(int(pivot_range)).min()).shift(int(pivot_range/2))
+    
 
 
     HH_condition = local_high_price & (df2.loc[local_high_price, 'pivotprice'] > df2.loc[local_high_price, 'pivotprice'].shift(1))
@@ -35,12 +34,15 @@ def find_pivots(df2, pivot_range, min_percentage_change):
     LH_condition =local_high_price & (df2.loc[local_high_price, 'pivotprice'] < df2.loc[local_high_price, 'pivotprice'].shift(1))
     HL_condition = local_low_price & (df2.loc[local_low_price, 'pivotprice'] > df2.loc[local_low_price, 'pivotprice'].shift(1))
 
+
+
     df2.loc[local_high_price, f'pivot_{pivot_range}'] = 1
     df2.loc[local_low_price, f'pivot_{pivot_range}'] = 2
     df2.loc[HH_condition, f'pivot_{pivot_range}'] = 3
     df2.loc[LL_condition, f'pivot_{pivot_range}'] = 4
     df2.loc[LH_condition, f'pivot_{pivot_range}'] = 5
     df2.loc[HL_condition, f'pivot_{pivot_range}'] = 6
+    
 
     df2['idxx'] = df2.index
 
@@ -48,73 +50,33 @@ def find_pivots(df2, pivot_range, min_percentage_change):
     df2.loc[df2[f'pivot_{pivot_range}'] == 4, f'LL_{pivot_range}_idx'] = df2['idxx']
     df2.loc[df2[f'pivot_{pivot_range}'] == 5, f'LH_{pivot_range}_idx'] = df2['idxx']
     df2.loc[df2[f'pivot_{pivot_range}'] == 6, f'HL_{pivot_range}_idx'] = df2['idxx']
+    
 
     df2[f'HH_{pivot_range}_idx'] = df2[f'HH_{pivot_range}_idx'].ffill()
     df2[f'LL_{pivot_range}_idx'] = df2[f'LL_{pivot_range}_idx'].ffill()
     df2[f'LH_{pivot_range}_idx'] = df2[f'LH_{pivot_range}_idx'].ffill()
     df2[f'HL_{pivot_range}_idx'] = df2[f'HL_{pivot_range}_idx'].ffill()
-
+    
     df2[f'HH_{pivot_range}_idx'] = df2[f'HH_{pivot_range}_idx'].fillna(0)
     df2[f'LL_{pivot_range}_idx'] = df2[f'LL_{pivot_range}_idx'].fillna(0)
     df2[f'LH_{pivot_range}_idx'] = df2[f'LH_{pivot_range}_idx'].fillna(0)
     df2[f'HL_{pivot_range}_idx'] = df2[f'HL_{pivot_range}_idx'].fillna(0)
+    
 
     ############################## MARK VALUES ##############################
     df2.loc[df2[f'pivot_{pivot_range}'] == 3, f'HH_{pivot_range}'] = df2['pivotprice']
     df2.loc[df2[f'pivot_{pivot_range}'] == 4, f'LL_{pivot_range}'] = df2['pivotprice']
     df2.loc[df2[f'pivot_{pivot_range}'] == 5, f'LH_{pivot_range}'] = df2['pivotprice']
     df2.loc[df2[f'pivot_{pivot_range}'] == 6, f'HL_{pivot_range}'] = df2['pivotprice']
+    
 
-    df2.loc[df2[f'pivot_{pivot_range}'] == 3, f'HH_{pivot_range}_rsi'] = df2['pivotprice_rsi']
-    df2.loc[df2[f'pivot_{pivot_range}'] == 4, f'LL_{pivot_range}_rsi'] = df2['pivotprice_rsi']
-    df2.loc[df2[f'pivot_{pivot_range}'] == 5, f'LH_{pivot_range}_rsi'] = df2['pivotprice_rsi']
-    df2.loc[df2[f'pivot_{pivot_range}'] == 6, f'HL_{pivot_range}_rsi'] = df2['pivotprice_rsi']
+
 
     df2[f'HH_{pivot_range}'] = df2[f'HH_{pivot_range}'].ffill()
     df2[f'LL_{pivot_range}'] = df2[f'LL_{pivot_range}'].ffill()
     df2[f'LH_{pivot_range}'] = df2[f'LH_{pivot_range}'].ffill()
     df2[f'HL_{pivot_range}'] = df2[f'HL_{pivot_range}'].ffill()
-
-    df2[f'HH_{pivot_range}_rsi'] = df2[f'HH_{pivot_range}_rsi'].ffill()
-    df2[f'LL_{pivot_range}_rsi'] = df2[f'LL_{pivot_range}_rsi'].ffill()
-    df2[f'LH_{pivot_range}_rsi'] = df2[f'LH_{pivot_range}_rsi'].ffill()
-    df2[f'HL_{pivot_range}_rsi'] = df2[f'HL_{pivot_range}_rsi'].ffill()
-
-    df2['HH_rsi_shift1'] = df2.loc[df2[f'pivot_{pivot_range}'] == 3, 'pivotprice_rsi'].shift(1)
-    df2['LL_rsi_shift1'] = df2.loc[df2[f'pivot_{pivot_range}'] == 4, 'pivotprice_rsi'].shift(1)
-    df2['LH_rsi_shift1'] = df2.loc[df2[f'pivot_{pivot_range}'] == 5, 'pivotprice_rsi'].shift(1)
-    df2['HL_rsi_shift1'] = df2.loc[df2[f'pivot_{pivot_range}'] == 6, 'pivotprice_rsi'].shift(1)
-
-    df2['HH_rsi_shift1'] = df2['HH_rsi_shift1'].ffill()
-    df2['LL_rsi_shift1'] = df2['LL_rsi_shift1'].ffill()
-    df2['LH_rsi_shift1'] = df2['LH_rsi_shift1'].ffill()
-    df2['HL_rsi_shift1'] = df2['HL_rsi_shift1'].ffill()
-
-    df2[f'HH_{pivot_range}_shift1'] = df2.loc[df2[f'pivot_{pivot_range}'] == 3, 'pivotprice'].shift(1)
-    df2['LL_shift1'] = df2.loc[df2[f'pivot_{pivot_range}'] == 4, 'pivotprice'].shift(1)
-    df2['LH_shift1'] = df2.loc[df2[f'pivot_{pivot_range}'] == 5, 'pivotprice'].shift(1)
-    df2['HL_shift1'] = df2.loc[df2[f'pivot_{pivot_range}'] == 6, 'pivotprice'].shift(1)
-
-    df2[f'HH_{pivot_range}_shift1'] = df2[f'HH_{pivot_range}_shift1'].ffill()
-    df2['LL_shift1'] = df2['LL_shift1'].ffill()
-    df2['LH_shift1'] = df2['LH_shift1'].ffill()
-    df2['HL_shift1'] = df2['HL_shift1'].ffill()
-
-    df2[f'HH_{pivot_range}_idx_shift1'] = df2.loc[df2[f'pivot_{pivot_range}'] == 3, 'idxx'].shift(1)
-    df2['LL_idx_shift1'] = df2.loc[df2[f'pivot_{pivot_range}'] == 4, 'idxx'].shift(1)
-    df2['LH_idx_shift1'] = df2.loc[df2[f'pivot_{pivot_range}'] == 5, 'idxx'].shift(1)
-    df2['HL_idx_shift1'] = df2.loc[df2[f'pivot_{pivot_range}'] == 6, 'idxx'].shift(1)
-
-    df2[f'HH_{pivot_range}_idx_shift1'] = df2[f'HH_{pivot_range}_idx_shift1'].ffill()
-    df2['LL_idx_shift1'] = df2['LL_idx_shift1'].ffill()
-    df2['LH_idx_shift1'] = df2['LH_idx_shift1'].ffill()
-    df2['HL_idx_shift1'] = df2['HL_idx_shift1'].ffill()
-
-
-
-
-
-
+    
 
 
     ###################################################################################################
@@ -152,13 +114,6 @@ def find_pivots(df2, pivot_range, min_percentage_change):
 
     df2.loc[(df2['high'].rolling(pivot_range).max() > df2[f'last_high_{pivot_range}']), f'last_high_{pivot_range}_idx'] = df2['high'].rolling(pivot_range).max()
     df2.loc[(df2['low'].rolling(pivot_range).min() < df2[f'last_low_{pivot_range}']), f'last_low_{pivot_range}_idx'] = df2['low'].rolling(pivot_range).min()
-
-    df2.loc[(df2[f'pivot_{pivot_range}']== 3) , 'last_LL_HH'] = df2[f'LL_{pivot_range}']
-    df2['last_LL_HH'] = df2['last_LL_HH'].ffill()
-
-    df2.loc[(df2[f'pivot_{pivot_range}']== 3) , 'last_HH_LL'] = df2[f'HH_{pivot_range}']
-    df2['last_HH_LL'] = df2['last_HH_LL'].ffill()
-
 
 
 
@@ -238,108 +193,6 @@ def find_pivots(df2, pivot_range, min_percentage_change):
 
 
 
-
-
-
-    rise_HH = df2[f'HH_{pivot_range}'] - df2[f'last_low_{pivot_range}']
-    warun_HH_bear = df2[f'last_low_{pivot_range}_idx'] > df2[f'HH_{pivot_range}_idx']
-
-    rise_LH = df2[f'LH_{pivot_range}'] - df2[f'last_low_{pivot_range}']
-    warun_LH_bear = df2[f'last_low_{pivot_range}_idx'] > df2[f'LH_{pivot_range}_idx']
-
-    rise_LL = df2[f'last_high_{pivot_range}'] - df2[f'LL_{pivot_range}']
-    warun_LL_bull = df2[f'last_high_{pivot_range}_idx'] > df2[f'LL_{pivot_range}_idx']
-
-    rise_HL = df2[f'last_high_{pivot_range}'] - df2[f'HL_{pivot_range}']
-    warun_HL_bull = df2[f'last_high_{pivot_range}_idx'] > df2[f'HL_{pivot_range}_idx']
-
-
-    #####################################################################################################
-
-    #####################################################################################################
-    df2[f'bear_div_rsi_{pivot_range}'] = (
-            ((df2['high'] > df2[f'HH_{pivot_range}']) &
-             (df2['rsi'].rolling(2).max() < df2[f'HH_{pivot_range}_rsi']) &
-             ((df2['close'] < (df2[f'last_low_{pivot_range}'] + (rise_HH * 1.618))) & warun_HH_bear)) |
-
-            ((df2['high'] > df2[f'LH_{pivot_range}']) &
-             (df2['rsi'].rolling(2).max() < df2[f'LH_{pivot_range}_rsi']) &
-             (df2[f'LH_{pivot_range}_idx'] > df2[f'HH_{pivot_range}_idx']) &
-             ((df2['close'] < (df2[f'last_low_{pivot_range}'] + (rise_LH * 1.618))) & warun_LH_bear))
-    )
-
-    df2[f'bull_div_rsi_{pivot_range}'] = (
-            (
-                    (df2['low'] < df2[f'LL_{pivot_range}']) &
-                    (df2['rsi'].rolling(2).min() > df2[f'LL_{pivot_range}_rsi'])&
-                    ((df2['close'] > (df2[f'last_high_{pivot_range}'] - (rise_LL * 1.618))) & warun_LL_bull)) |
-
-            (
-                    (df2['low'] < df2[f'HL_{pivot_range}']) &
-                    (df2['rsi'].rolling(2).max() > df2[f'HL_{pivot_range}_rsi']) &
-                    (df2[f'HL_{pivot_range}_idx'] > df2[f'LL_{pivot_range}_idx'])&
-                    ((df2['close'] > (df2[f'last_high_{pivot_range}'] - (rise_LL * 1.618))) & warun_HL_bull))
-    )
-
-    df2.loc[df2[f'pivot_{pivot_range}'] == 3, f'HH_{pivot_range}_div'] = df2[f'bull_div_rsi_{pivot_range}']
-    df2.loc[df2[f'pivot_{pivot_range}'] == 4, f'LL_{pivot_range}_div'] = df2[f'bear_div_rsi_{pivot_range}']
-
-    df2[f'HH_{pivot_range}_div'] = df2[f'HH_{pivot_range}_div'].ffill()
-    df2[f'LL_{pivot_range}_div'] = df2[f'LL_{pivot_range}_div'].ffill()
-
-    df2[f'HH_{pivot_range}_div'] = df2[f'HH_{pivot_range}_div'].fillna(df2['close'])
-    df2[f'LL_{pivot_range}_div'] = df2[f'LL_{pivot_range}_div'].fillna(df2['close'])
-
-
-    ####################### HIDDEN ############################################################
-
-    df2[f'hidden_bear_div_rsi_{pivot_range}'] = (
-        ((df2['rsi'] > df2[f'HH_{pivot_range}_rsi']) &
-         (df2['high'].rolling(2).max() < df2[f'HH_{pivot_range}']) &
-         (df2[f'HH_{pivot_range}_rsi'] > 30) |
-
-        ((df2['high'] > df2[f'LH_{pivot_range}']) &
-         (df2['rsi'].rolling(2).max()  < df2[f'LH_{pivot_range}_rsi']) &
-         (df2[f'LH_{pivot_range}_idx'] > df2[f'HH_{pivot_range}_idx']) &
-         (df2[f'LH_{pivot_range}_rsi'] > 60) &
-         ((df2['close'] < (df2[f'last_low_{pivot_range}'] + (rise_LH * 1.618))) & warun_LH_bear))
-        ))
-
-    ####################### DIVS ON PIVOTS ############################################################
-    df2[f'pivot_bull_div_{pivot_range}'] = False
-    df2[f'pivot_bear_div_{pivot_range}'] = False
-
-    df2.loc[df2[f'pivot_{pivot_range}'] == 3, f'pivot_bear_div_{pivot_range}'] = ((HH_condition == True) &
-                                                                   (
-                                                                           (
-                                                                                    (df2[f'HH_{pivot_range}'] > df2[f'HH_{pivot_range}_shift1']) &
-                                                                                    (df2[f'HH_{pivot_range}_rsi'] < df2['HH_rsi_shift1'])) |
-                                                                           (
-                                                                                    (df2[f'HH_{pivot_range}'] > df2[f'LH_{pivot_range}']) &
-                                                                                    (df2[f'LH_{pivot_range}_rsi'] > df2[f'HH_{pivot_range}_rsi']) &
-                                                                                    (df2[f'LH_{pivot_range}_idx'] < df2[f'HH_{pivot_range}_idx']))))
-
-    df2.loc[df2[f'pivot_{pivot_range}'] == 4, f'pivot_bull_div_{pivot_range}'] = (
-        (((df2['LL_shift1'] > df2[f'LL_{pivot_range}']) &
-          (df2['LL_rsi_shift1'] < df2[f'LL_{pivot_range}_rsi'])) |
-         ((df2['HL_shift1'] > df2[f'LL_{pivot_range}']) &
-          (df2['HL_rsi_shift1'] < df2[f'LL_{pivot_range}_rsi']) &
-          (df2['HL_idx_shift1'] < df2[f'LL_{pivot_range}_idx'])) |
-         ((df2[f'HL_{pivot_range}'] > df2[f'LL_{pivot_range}']) &
-          (df2[f'HL_{pivot_range}_rsi'] < df2[f'LL_{pivot_range}_rsi']) &
-          (df2[f'HL_{pivot_range}_idx'] < df2[f'LL_{pivot_range}_idx']))))
-
-    df2.loc[df2[f'pivot_bear_div_{pivot_range}'] == True, f'pivot_bear_div_idx_{pivot_range}'] = df2['idxx']
-    df2.loc[df2[f'pivot_bull_div_{pivot_range}'] == True, f'pivot_bull_div_idx_{pivot_range}'] = df2['idxx']
-
-    df2[f'pivot_bear_div_{pivot_range}'] = df2[f'pivot_bear_div_{pivot_range}'].ffill()
-    df2[f'pivot_bull_div_{pivot_range}'] = df2[f'pivot_bull_div_{pivot_range}'].ffill()
-
-    df2[f'pivot_bear_div_idx_{pivot_range}'] = df2[f'pivot_bear_div_idx_{pivot_range}'].ffill()
-    df2[f'pivot_bull_div_idx_{pivot_range}'] = df2[f'pivot_bull_div_idx_{pivot_range}'].ffill()
-
-
-
     df2[f'price_action_bull_{pivot_range}'] = False
 
     df2.loc[df2[[f'LL_{pivot_range}_idx',f'HL_{pivot_range}_idx',f'HH_{pivot_range}_idx',f'LH_{pivot_range}_idx']].max(axis=1) == df2[f'HH_{pivot_range}_idx'], 
@@ -382,12 +235,6 @@ def find_pivots(df2, pivot_range, min_percentage_change):
             (df2[f'LL_{pivot_range}_idx'] > df2[[f'HL_{pivot_range}_idx', f'HL_{pivot_range}_idx']].min(axis=1))
     )
 
-    ob_bull_cond = (df2[f'pivot_{pivot_range}'] == 4) | (df2[f'pivot_{pivot_range}'] == 6)
-    bullish_ob = df2.loc[ob_bull_cond, ['pivotprice', 'pivot_body', 'idxx','time']]
-
-    ob_bear_cond = (df2[f'pivot_{pivot_range}'] == 3) | (df2[f'pivot_{pivot_range}'] == 1)
-    bearish_ob = df2.loc[ob_bear_cond, ['pivotprice', 'pivot_body', 'idxx','time']]
-
 
     fibos = df2[[f'fibo_global_0618_{pivot_range}',f'fibo_global_0660_{pivot_range}',f'fibo_local_0618_{pivot_range}',f'fibo_local_0660_{pivot_range}',
                  f'fibo_global_1272_{pivot_range}',f'fibo_global_1618_{pivot_range}',f'fibo_local_1272_{pivot_range}',f'fibo_local_1618_{pivot_range}',
@@ -400,11 +247,13 @@ def find_pivots(df2, pivot_range, min_percentage_change):
                  f'price_action_bull_{pivot_range}',f'price_action_bear_{pivot_range}',
                  f'last_high_{pivot_range}', f'last_low_{pivot_range}', f'pivot_{pivot_range}']]
 
-    divs = df2[[f'bear_div_rsi_{pivot_range}', f'bull_div_rsi_{pivot_range}',
-                f'pivot_bear_div_{pivot_range}', f'pivot_bull_div_{pivot_range}',
-                f'pivot_bear_div_idx_{pivot_range}', f'pivot_bull_div_idx_{pivot_range}']]
+    
 
+    ob_bull_cond = (df2[f'pivot_{pivot_range}'] == 4) | (df2[f'pivot_{pivot_range}'] == 6)
+    bullish_ob = df2.loc[ob_bull_cond, ['pivotprice', 'pivot_body', 'idxx','time']]
 
+    ob_bear_cond = (df2[f'pivot_{pivot_range}'] == 3) | (df2[f'pivot_{pivot_range}'] == 5) 
+    bearish_ob = df2.loc[ob_bear_cond, ['pivotprice', 'pivot_body', 'idxx','time']]
 
     bullish_ob_renamed = bullish_ob.rename(columns={'pivotprice': 'low_boundary','pivot_body': 'high_boundary'})
 
@@ -412,7 +261,7 @@ def find_pivots(df2, pivot_range, min_percentage_change):
     bearish_ob_renamed = bearish_ob.rename(columns={'pivotprice': 'high_boundary', 'pivot_body': 'low_boundary'})
 
 
-    return  fibos, divs,  peaks, bullish_ob_renamed, bearish_ob_renamed
+    return  fibos,  peaks, bullish_ob_renamed, bearish_ob_renamed
 
 def RMA(dataframe, source, period):
     df = dataframe.copy()
@@ -526,50 +375,93 @@ def calculate_vwma(prices: pd.DataFrame, window: int):
     vwma = rolling_sum_weighted_prices / rolling_sum_volume
     return vwma
 
-def check_reaction(df, lvl):
+def check_reaction(df, lvl, direction='bullish'):
+    
 
-    df = df.copy()
-
-    open = df['open']
+    open_ = df['open']
     close = df['close']
     high = df['high']
     low = df['low']
-    body = abs(close - open)
+    body = abs(close - open_)
     candle_range = high - low
-    upper_shadow = high - df[['close','open']].max(axis=1)
-    lower_shadow = df[['close','open']].min(axis=1) - low
+    upper_shadow = high - df[['close', 'open']].max(axis=1)
+    lower_shadow = df[['close', 'open']].min(axis=1) - low
 
-    SFP_hammer = (
-        (low < lvl) &
-        (close > lvl) & 
-        (body < candle_range * 0.3) & 
-        (lvl <= df[['close','open']].max(axis=1).rolling(5).min().shift(1)) )
+    max_body_rolling_5_min = df[['close', 'open']].max(axis=1).rolling(5).min().shift(1)
+    max_body_rolling_5_min_shift2 = df[['close', 'open']].max(axis=1).rolling(5).min().shift(2)
+    min_body_rolling_5_max = df[['close', 'open']].min(axis=1).rolling(5).max().shift(1)
+    min_body_rolling_5_max_shift2 = df[['close', 'open']].min(axis=1).rolling(5).max().shift(2)
 
-    SFP_green = (
-        (low < lvl) & 
-        (close > lvl) & 
-        (close > open)& 
-        (low <= close.rolling(10).min().shift(1)) &
-        (lvl <= df[['close','open']].max(axis=1).rolling(5).min().shift(1)) )
-    SFP_red = (
-        (low.shift(1) < lvl) & 
-        (close.shift(1) > lvl)  &  
-        (close.shift(1) < open.shift(1)) & 
-        (close > open) & 
-        (close > lvl)& 
-        (lvl <= df[['close','open']].max(axis=1).rolling(5).min().shift(2)) )
-    SFP_fakeout = (
-        (close.shift(1) < lvl) & 
-        (close.shift(1) < open.shift(1)) & 
-        (close > lvl) & 
-        (lvl <= df[['close','open']].max(axis=1).rolling(5).min().shift(2)) &
-        (close > open))
-    
+    if direction == 'bullish':
+        SFP_hammer = (
+            (low < lvl) &
+            (close > lvl) & 
+            (body < candle_range * 0.3) & 
+            (lvl <= max_body_rolling_5_min)
+        )
 
-    
+        SFP_green = (
+            (low < lvl) &
+            (close > lvl) &
+            (close > open_) &
+            (low <= close.rolling(10).min().shift(1)) &
+            (lvl <= min_body_rolling_5_max)
+        )
 
-      
-    return SFP_hammer + SFP_green + SFP_red + SFP_fakeout 
+        SFP_red = (
+            (low.shift(1) < lvl) &
+            (close.shift(1) > lvl) &
+            (close.shift(1) < open_.shift(1)) &
+            (close > open_) &
+            (close > lvl) &
+            (lvl <= min_body_rolling_5_max_shift2)
+        )
+
+        SFP_fakeout = (
+            (close.shift(1) < lvl) &
+            (close.shift(1) < open_.shift(1)) &
+            (close > lvl) &
+            (lvl <= max_body_rolling_5_min_shift2) &
+            (close > open_)
+        )
+
+    elif direction == 'bearish':
+        SFP_hammer = (
+            (high > lvl) &
+            (close < lvl) &
+            (body < candle_range * 0.3) &
+            (lvl >= min_body_rolling_5_max)
+        )
+
+        SFP_green = (
+            (high > lvl) &
+            (close < lvl) &
+            (close < open_) &
+            (high >= close.rolling(10).max().shift(1)) &
+            (lvl >= min_body_rolling_5_max)
+        )
+
+        SFP_red = (
+            (high.shift(1) > lvl) &
+            (close.shift(1) < lvl) &
+            (close.shift(1) > open_.shift(1)) &
+            (close < open_) &
+            (close < lvl) &
+            (lvl >= min_body_rolling_5_max_shift2)
+        )
+
+        SFP_fakeout = (
+            (close.shift(1) > lvl) &
+            (close.shift(1) > open_.shift(1)) &
+            (close < lvl) &
+            (lvl >= min_body_rolling_5_max_shift2) &
+            (close < open_)
+        )
+
+    else:
+        raise ValueError("direction must be 'bullish' or 'bearish'")
+
+    return SFP_hammer | SFP_green | SFP_red | SFP_fakeout
 
 def candlectick_confirmation(df2, direction):
 
@@ -822,7 +714,7 @@ def invalidate_zones_by_candle_extremes_next(
     return bullish_zones_df, bearish_zones_df
 
 def mark_zone_reactions(
-    timeframe ,
+    timeframe,
     df,
     zone_df,
     direction,
@@ -830,24 +722,6 @@ def mark_zone_reactions(
     time_zone_col: str = None,
     always_create_breaker: bool = True
 ):
-    """
-    Oznacza reakcje na strefy (FVG lub OB) w DataFrame świec.
-    Może opcjonalnie tworzyć breaker block na końcu każdego OB.
-
-    Parametry:
-        is_OB - True jeśli analizujemy order blocki
-        timeframe - 'aditional' jeśli kolumny mają sufiks _H1
-        df - DataFrame OHLCV z kolumną 'idxx'
-        zone_df - DataFrame ze strefami (idxx, validate_till, low_boundary, high_boundary, validate_till_time)
-        direction - 'bullish' lub 'bearish'
-        time_df_col - kolumna z czasem w df
-        time_zone_col - kolumna z czasem w zone_df
-        always_create_breaker - jeśli True, breaker block tworzony zawsze po OB
-    """
-
-    df = df.copy()
-
-
     if timeframe == "aditional":
         df.columns = [
             col if col == 'time_H1' else col.replace('_H1', '')
@@ -858,10 +732,10 @@ def mark_zone_reactions(
     min_body_prev = df[['open', 'close']].min(axis=1).shift(1)
     max_body_prev = df[['open', 'close']].max(axis=1).shift(1)
     min_body_now = df[['open', 'close']].min(axis=1)
-    max_body_now = df[['open', 'close']].max(axis=1)
 
-    # Inicjalizacja kolumn
+    # Inicjalizacja kolumn wynikowych
     reaction_col = pd.Series(False, index=df.index)
+    is_in_col = pd.Series(False, index=df.index)
     low_boundary_col = pd.Series(np.nan, index=df.index, dtype=float)
     high_boundary_col = pd.Series(np.nan, index=df.index, dtype=float)
 
@@ -871,32 +745,34 @@ def mark_zone_reactions(
         if pd.isna(row['validate_till']):
             continue
 
-        # Zakres ważności strefy
+        # Zakres czasowy ważności strefy
         valid_range = (df[time_df_col] > row[time_zone_col]) & (
             (df[time_df_col] < row['validate_till_time']) | pd.isna(row['validate_till_time'])
         )
 
-        # Reakcje wg kierunku
-        if direction == 'bullish':
-            reaction = ( #((min_body_prev < row['high_boundary']) &(min_body_now > row['low_boundary'])) |
-                 check_reaction(df, row['low_boundary']) | check_reaction(df, row['high_boundary']))
-        elif direction == 'bearish':
-            reaction = ((max_body_prev > row['low_boundary']) &
-                        (max_body_now < row['high_boundary']))
-        else:
-            raise ValueError("direction must be 'bullish' or 'bearish'")
+        # Wytnij tylko ten zakres z df
+        df_slice = df.loc[valid_range]
 
-        mask = valid_range & reaction
+        # Reakcja na dolną i górną granicę
+        reaction_local = (
+            check_reaction(df_slice, row['low_boundary'], direction) |
+            check_reaction(df_slice, row['high_boundary'], direction)
+        )
 
-        if mask.any():
-            reaction_col.loc[mask] = True
-            low_boundary_col.loc[mask] = row['low_boundary']
-            high_boundary_col.loc[mask] = row['high_boundary']
+        # Czy świeca jest wewnątrz strefy
+        is_in_zone_local = (
+            (min_body_prev[valid_range] < row['high_boundary']) &
+            (min_body_now[valid_range] > row['low_boundary'])
+        )
 
-            low_boundary_col = low_boundary_col.ffill()
-            high_boundary_col = high_boundary_col.ffill()
+        # Przypisz wartości tylko do ograniczonego zakresu
+        reaction_col.loc[df_slice.index[reaction_local]] = True
+        is_in_col.loc[df_slice.index[is_in_zone_local]] = True
 
-        # Zawsze twórz breaker block na końcu OB
+        low_boundary_col.loc[df_slice.index[reaction_local | is_in_zone_local]] = row['low_boundary']
+        high_boundary_col.loc[df_slice.index[reaction_local | is_in_zone_local]] = row['high_boundary']
+
+        # Dodaj breaker (opcjonalnie)
         if always_create_breaker:
             breaker_blocks.append({
                 'high_boundary': row['high_boundary'],
@@ -905,12 +781,14 @@ def mark_zone_reactions(
                 time_zone_col: row['validate_till_time'],
                 'zone_type': 'breaker'
             })
+
+    # Breaker DataFrame
     breaker_blocks_df = pd.DataFrame(breaker_blocks).sort_values(by='idxx')
 
     if (zone_df['zone_type'] == 'ob').any():
-        return reaction_col, low_boundary_col, high_boundary_col, breaker_blocks_df
+        return reaction_col, is_in_col, low_boundary_col, high_boundary_col, breaker_blocks_df
     else:
-        return reaction_col, low_boundary_col, high_boundary_col
+        return reaction_col, is_in_col, low_boundary_col, high_boundary_col
     
 
 
@@ -925,13 +803,16 @@ def mark_fibo_reactions(df, zone, direction):
     max_body_now = df[['open', 'close']].max(axis=1)
 
     reaction_col = pd.Series(False, index=df.index)
+    is_in_col = pd.Series(False, index=df.index)
     low_boundary_col = pd.Series(np.nan, index=df.index, dtype=float)
     high_boundary_col = pd.Series(np.nan, index=df.index, dtype=float)
 
     closes = df['close']
 
     if direction == 'bullish':
-        reaction = ((min_body_prev < zone['high_boundary']) & (min_body_now > zone['low_boundary']))
+        is_in = ((min_body_prev < zone['high_boundary']) & (min_body_now > zone['low_boundary']))
+        reaction = (check_reaction(df, zone['low_boundary'] ,direction )
+                   |check_reaction(df, zone['high_boundary'] ,direction))
         
         # Tworzymy serię bool - czy close jest poniżej low_boundary
         below_low = (closes < zone['low_boundary']).astype(int)
@@ -940,28 +821,32 @@ def mark_fibo_reactions(df, zone, direction):
         # warunek: w oknie 15 ostatnich świec było mniej niż 2 zamknięć poniżej fibo
         condition_no_two_below = count_below_15 < 2
 
+        is_in = is_in & condition_no_two_below
         reaction = reaction & condition_no_two_below
 
     elif direction == 'bearish':
-        reaction = ((max_body_prev > zone['low_boundary']) & (max_body_now < zone['high_boundary']))
+        is_in = ((max_body_prev > zone['low_boundary']) & (max_body_now < zone['high_boundary']))
+        reaction = (check_reaction(df, zone['low_boundary'] ,direction )
+                   |check_reaction(df, zone['high_boundary'] ,direction))
 
         above_high = (closes > zone['high_boundary']).astype(int)
         count_above_15 = above_high.shift(1).rolling(window=15, min_periods=1).sum()
         condition_no_two_above = count_above_15 < 2
 
+        is_in = is_in & condition_no_two_above
         reaction = reaction & condition_no_two_above
 
     else:
         raise ValueError("direction must być 'bullish' lub 'bearish'")
-
     reaction_col.loc[reaction] = True
-    low_boundary_col.loc[reaction] = zone['low_boundary']
-    high_boundary_col.loc[reaction] = zone['high_boundary']
+    is_in_col.loc[is_in] = True
+    low_boundary_col.loc[is_in] = zone['low_boundary']
+    high_boundary_col.loc[is_in] = zone['high_boundary']
 
     low_boundary_col = low_boundary_col.ffill()
     high_boundary_col = high_boundary_col.ffill()
 
-    return reaction, low_boundary_col, high_boundary_col
+    return reaction_col, is_in, low_boundary_col, high_boundary_col
 
 def diff_percentage(v2, v1) -> float:
         diff = (v2 - v1) 
@@ -999,4 +884,37 @@ def calculate_monday_high_low(df, timezone='UTC'):
     df.drop(columns=['date', 'monday'], inplace=True)
 
     return df
+
+def detect_equal_extreme(df, pivot_col: str, atr_col: str, direction='bearish', window=10) -> pd.Series:
+    """
+    Wykrywa EQH lub EQL na podstawie reakcji i price rejection w kolejnych świecach.
+    """
+    mask = pd.Series(False, index=df.index)
+
+    if direction == 'bearish':
+        trigger_mask = (
+            check_reaction(df, df[pivot_col], direction) |
+            (df['close'] - df[pivot_col]).abs() < 0.2 * df[atr_col]
+        )
+    else:
+        trigger_mask = (
+            check_reaction(df, df[pivot_col], direction) |
+            (df[pivot_col] - df['close']).abs() < 0.2 * df[atr_col]
+        )
+
+    trigger_indices = df[trigger_mask].index
+
+    for idx in trigger_indices:
+        atr_val = df.at[idx, atr_col]
+        pivot_price = df.at[idx, pivot_col]
+        future_window = df.loc[idx:].head(window)
+
+        if direction == 'bearish':
+            if (future_window['low'] < (pivot_price - 1.5 * atr_val)).any():
+                mask.at[idx] = True
+        else:
+            if (future_window['high'] > (pivot_price + 1.5 * atr_val)).any():
+                mask.at[idx] = True
+
+    return mask
 
