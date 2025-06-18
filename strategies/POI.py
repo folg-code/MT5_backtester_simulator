@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import TA_function as myTA
 import indicators as qtpylib
 import talib.abstract as ta
@@ -7,13 +8,14 @@ import config
 from utils.decorators import informative  # ← NOWE
 from utils.df_trimmer import trim_all_dataframes             # ← NOWE
 import MetaTrader5 as mt5
+import time
 from utils.informative_utils import (
     get_informative_dataframe,
     merge_informative_data,
     populate_informative_indicators,
 )
 from collections import defaultdict
-
+from datetime import datetime, timedelta, timezone
 
 
 class Poi:
@@ -65,13 +67,17 @@ class Poi:
         heikinashi = qtpylib.heikinashi(df)
         df[['ha_open', 'ha_close', 'ha_high', 'ha_low']] = heikinashi[['open', 'close', 'high', 'low']]
 
-        df['candle_bullish'] = myTA.candlectick_confirmation(df, 'long')
+        df['candle_bull']  = myTA.candlectick_confirmation(df, 'long')
+        
+        df['candle_bullish'] = df['candle_bull'].shift(12)
 
-        df['bullish_lqs'] = ((myTA.check_reaction(df, df['LL_15'], 'bullish') ) | (myTA.check_reaction(df, df['HL_15'], 'bullish') & (df['LL_15_idx'] < df['HL_15_idx'])))
+        df['bullish_lq'] = ((myTA.check_reaction(df, df['LL_15'], 'bullish') ) | (myTA.check_reaction(df, df['HL_15'], 'bullish') & (df['LL_15_idx'] < df['HL_15_idx'])))
 
+        df['bullish_lqs'] = df['bullish_lq'].shift(1)
         df = myTA.calculate_monday_high_low(df)
 
-        df['bullish_mons_reaction'] = ((myTA.check_reaction(df, df['monday_low'], 'bullish')) & (df['weekday'] != 0))
+        df['bullish_mons_'] = ((myTA.check_reaction(df, df['monday_low'], 'bullish')) & (df['weekday'] != 0))
+        df['bullish_mons_reaction'] = df['bullish_mons_'].shift(1)
 
 
 
@@ -80,7 +86,19 @@ class Poi:
 
     def populate_indicators(self):
 
-        
+     
+        pd.set_option('future.no_silent_downcasting', True)
+        # Filtrujemy wszystkie kolumny z "_H1"
+        fill_columns = [col for col in self.df.columns if "_H1" in col]
+
+        # Sortujemy dane po czasie (upewnij się, że kolumna time_x istnieje)
+        self.df = self.df.sort_values('time_x')
+
+        # Wypełniamy brakujące dane danymi z poprzednich wierszy
+        self.df[fill_columns] = self.df[fill_columns].ffill()
+
+        t1 = time.perf_counter()
+
 
         smc._prepare_dataframe(self)
 
@@ -96,21 +114,35 @@ class Poi:
 
         smc._mark_sweeps(self)
 
+
+
     def populate_entry_trend(self):
-        print("initiate populate_entry_trend")
+
+        #print("initiate populate_entry_trend")
+
+        
+        
         df = self.df.copy()
+
+        
 
         df['signal_entry'] = None
         price_action_bull =  df['price_action_bull_15']
 
+        price_action_bull5 =  df['price_action_bull_5']
+
         bearish_lqs = (df['EQH'].rolling(5).sum() == False)
         candle_bullish = myTA.candlectick_confirmation(df, 'long')
+        candle_bullish_H1 = df['candle_bullish_H1']
         low_tf_zones = (df['bullish_fvg_reaction'] |  df['bullish_ob_reaction'] | df['bullish_breaker_reaction']   )
-        additional_check=   (   price_action_bull |  df['bullish_lqs'] | df['EQL']) 
+        
+        bullish_sr_flip = df['bullish_sr_flip']
         local_min = df['low'].rolling(15).min() 
         df['local_min'] = local_min
         sl_atr = local_min - df['atr']
         df['sl_atr'] = sl_atr
+
+        df['tp1_atr'] = df["close"] + 5 * df["atr"]
         df['double_HH_15'] = (df['close'] + ((df['HH_15'] - df['close']) * 2)   )
 
         last_low = df['low'].rolling(5).min()
@@ -120,10 +152,13 @@ class Poi:
                     |df['bullish_breaker_is_in_H1'] | df['bullish_gap_is_in']
                     |df['bullish_GPG_is_in_H1'] |  df['bullish_GPL_is_in_H1']   )
         
+        LTF_zones = (df['bullish_fvg_is_in'] |  df['bullish_ob_is_in'] |df['bullish_breaker_is_in']   )
+        additional_check_ori=   (   price_action_bull |  df['bullish_lqs'] | df['EQL']) 
+        additional_check=   (  (df['bullish_lqs'] | df['EQL'] | bullish_sr_flip ) | price_action_bull | HTF_zones ) 
         is_in_zone_solo = additional_check  & low_guard & bearish_lqs & price_action_bull
         H1_is_in_solo = [ "bullish_breaker_is_in_H1", "bullish_breaker_is_in_H1",'bullish_GPG_is_in_H1','bullish_gap_is_in']
 
-
+        
 
         #@fvg_h1_is_in
 
@@ -132,16 +167,18 @@ class Poi:
 
         zone_names_H1_reaction = ['bullish_fvg_reaction_H1', "bullish_breaker_reaction_H1",'bullish_GPG_reaction_H1','bullish_GPL_reaction_H1','bullish_gap_reaction']
 
-        zone_names_H1_is_in = [ "bullish_breaker_is_in_H1", "bullish_breaker_is_in_H1",'bullish_GPG_is_in_H1','bullish_gap_is_in']
+        zone_names_H1_is_in = [ "bullish_ob_is_in_H1", "bullish_breaker_is_in_H1",'bullish_GPG_is_in_H1','bullish_gap_is_in']
         zone_names = ['bullish_fvg_reaction','bullish_ob_reaction' ,"bullish_breaker_reaction"]
         levels_names = ["bullish_lqs_H1","bullish_mons_reaction_H1","bullish_mons_reaction"]
 
 
         for i, row in df.iterrows():
             idx = row.name  # Prawdziwy indeks w DataFrame
-
+            
             for zone in zone_names:
-                if row.get(zone) and additional_check[i] and price_action_bull[i] and bearish_lqs[i] :
+                if (row.get(zone) and low_guard[i] and additional_check[i] and bearish_lqs[i]  and price_action_bull[i] and low_guard[i]
+                    #and additional_check[i]  and bearish_lqs[i] 
+                    ) :
                     tag = zone.replace("bullish_", "").replace("_reaction", "").upper()
                     direction = "long" if "bullish" in zone else "short"
 
@@ -158,15 +195,18 @@ class Poi:
                     # Kandydaci na poziomy
                     level_options = {
                         "tag": tag,
-                        "sl_candidates": [("zone_level", zone_level)],
-                        "tp1_candidates": [("HH_15", row["HH_15"]), ("TP1_ATR", row["close"] + row["atr"])],
-                        "tp2_candidates": [("HH_15_H1", row["HH_15_H1"]),("double_HH_15", row["double_HH_15"]), ("RR_3", row["close"] + 5 * row["atr"])]
+                        "sl_candidates": [("zone_level", zone_level),("sl_atr", row["sl_atr"])],
+                        "tp1_candidates": [("HH_15", row["HH_15"]), ("TP1_ATR",  row['tp1_atr'])],
+                        "tp2_candidates": [("HH_15_H1", row["HH_15_H1"]),("double_HH_15", row["double_HH_15"]), ("RR_5", row["close"] + 5 * row["atr"])]
                     }
                     # Dodanie poziomów
                     levels[idx].append(level_options)
+          
             
             for zone_H1 in zone_names_H1_reaction:
-                if row.get(zone_H1) and additional_check[i]  and low_guard[i] :
+                if (row.get(zone_H1) and candle_bullish[i] and additional_check_ori[i]   
+                     #and additional_check[i]  and low_guard[i] and candle_bullish_H1[i]
+                    ) :
                     tag = zone_H1.replace("bullish_", "").replace("_reaction", "").upper()
                     direction = "long" if "bullish" in zone_H1 else "short"
                     
@@ -186,14 +226,16 @@ class Poi:
                     level_options = {
                         "tag": tag,
                         "sl_candidates": [("zone_level", zone_level),("sl_atr", row["sl_atr"])],
-                        "tp1_candidates": [("HH_15", row["HH_15"]), ("TP1_ATR", row["close"] +  row["atr"])],
-                        "tp2_candidates": [("HH_15_H1", row["HH_15_H1"]),("double_HH_15", row["double_HH_15"]), ("RR_3", row["close"] + 3 * row["atr"])]
+                        "tp1_candidates": [("HH_15", row["HH_15"]), ("TP1_ATR", row["close"] +  (2 *row["atr"]))],
+                        "tp2_candidates": [("HH_15_H1", row["HH_15_H1"]),("double_HH_15", row["double_HH_15"]), ("RR_5", row["close"] + 6 * row["atr"])]
                     }
                     # Dodanie poziomów
                     levels[idx].append(level_options)
-
+            
             for zone_H1_is_in in zone_names_H1_is_in:
-                if row.get(zone_H1_is_in) and additional_check[i]  and low_guard[i] and bearish_lqs[i] and price_action_bull[i]:
+                if (row.get(zone_H1_is_in) and candle_bullish[i] and LTF_zones[i]  
+                     #and additional_check[i]  and low_guard[i] and bearish_lqs[i] and price_action_bull[i]
+                     ):
                     tag = zone_H1_is_in.replace("bullish_", "").replace("_reaction", "").upper()
                     direction = "long" if "bullish" in zone_H1_is_in else "short"
                     
@@ -213,14 +255,14 @@ class Poi:
                     level_options = {
                         "tag": tag,
                         "sl_candidates": [("zone_level", zone_level),("sl_atr", row["sl_atr"])],
-                        "tp1_candidates": [("HH_15", row["HH_15"]), ("TP1_ATR", row["close"] +  row["atr"])],
-                        "tp2_candidates": [("HH_15_H1", row["HH_15_H1"]),("double_HH_15", row["double_HH_15"]), ("RR_3", row["close"] + 3 * row["atr"])]
+                        "tp1_candidates": [("HH_15", row["HH_15"]), ("TP1_ATR", row["close"] +  (3 *row["atr"]))],
+                        "tp2_candidates": [("HH_15_H1", row["HH_15_H1"]),("double_HH_15", row["double_HH_15"]), ("RR_5", row["close"] + 6 * row["atr"])]
                     }
                     # Dodanie poziomów
                     levels[idx].append(level_options)
                     
             for zone in levels_names:
-                if row.get(zone) and additional_check[i] and candle_bullish[i]:
+                if row.get(zone) and additional_check_ori[i] and candle_bullish[i] and candle_bullish_H1[i] :
                     tag = zone.replace("reaction", "")  # np. bullish_fvg_
                     tag = zone.replace("bullish", "B")  # np. bullish_fvg_
                     direction = "long" if "bullish" in zone else "short"
@@ -235,12 +277,13 @@ class Poi:
                     level_options = {
                         "tag": tag,
                         "sl_candidates": [("last_low_15", row["local_min"]),("sl_atr", row["sl_atr"])],
-                        "tp1_candidates": [("HH_15", row["HH_15"]), ("TP1_ATR", row["close"] + row["atr"])],
+                        "tp1_candidates": [("HH_15", row["HH_15"]), ("TP1_ATR", row["close"] + (2 *row["atr"]))],
                         "tp2_candidates": [("HH_15_H1", row["HH_15_H1"]), ("RR_3", row["close"] + 5 * row["atr"])]
                     }
                     # Dodanie poziomów
                     levels[idx].append(level_options)
             
+     
             
             direction = None
             if entries.get(i) and isinstance(entries[i][0], tuple):
@@ -274,7 +317,7 @@ class Poi:
 
     def populate_exit_trend(self):
 
-        print("initiate populate_exit_trend")
+        #print("initiate populate_exit_trend")
         df = self.df
 
         df['signal_exit'] = None
@@ -296,14 +339,14 @@ class Poi:
     def get_bullish_zones(self):
         return [
 
-            ("Bullish FVG H1", self.bullish_fvg_validated_H1, "rgba(255, 152, 0, 0.3)"),       # Pomarańcz
-            ("Bullish FVG ", self.bullish_fvg_validated, "rgba(255, 152, 0, 0.7)"),  
+            #("Bullish FVG H1", self.bullish_fvg_validated_H1, "rgba(255, 152, 0, 0.3)"),       # Pomarańcz
+            #("Bullish FVG ", self.bullish_fvg_validated, "rgba(255, 152, 0, 0.7)"),  
             ("Bullish OB H1", self.bullish_ob_validated_H1, "rgba(56, 142, 60, 0.3)"),
             ("Bullish OB ", self.bullish_ob_validated, "rgba(56, 142, 60, 0.7)"),          # Zielony (bez zmian)
             ("Bullish Breaker H1", self.bullish_breaker_validated_H1, "rgba(33, 150, 243, 0.3)"), # Niebieski
             ("Bullish Breaker ", self.bullish_breaker_validated, "rgba(33, 150, 243, 0.7)"),
 
-            ("Bullish GAP ", self.bullish_gap_validated, "rgba(33, 150, 243, 0.7)"),
+            #("Bullish GAP ", self.bullish_gap_validated, "rgba(33, 150, 243, 0.7)"),
 
 
         ]
@@ -348,18 +391,40 @@ class Poi:
 
     def run(self) -> pd.DataFrame:
 
+        start = time.perf_counter()
+        #print(f"➡️ [{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}] START")
         populate_informative_indicators(self)
+
+
         self.populate_indicators()
+
+
         trim_all_dataframes(self)
+
         self.populate_entry_trend()
+
+
         self.populate_exit_trend()
+        
+
         self.df_plot = self.df.copy()
+        
+
+       
 
         # Przygotuj okrojoną wersję do backtestu
         self.df_backtest = self.df[['time', 'open', 'high', 'low', 'close', 'signal_entry', 'signal_exit','levels']].copy()
 
         return self.df_backtest
     
+    def run_live(self):
+        """
+        Uruchomienie strategii na ostatnich danych (np. ostatnia świeca lub ostatnie N świec).
+        Zwykle sprawdza, czy pojawił się nowy sygnał wejścia/wyjścia.
+        """
+        self.run()
+
+
 def merge_signals(signal_list):
     if not signal_list:
         return None
@@ -401,7 +466,7 @@ def merge_levels(level_list, direction="long", close_price=None):
 
 
     if not tp1_all or not tp2_all:
-        print("No TP candidates left after filtering - returning None")
+        #print("No TP candidates left after filtering - returning None")
         return None
         
 

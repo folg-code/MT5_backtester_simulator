@@ -76,6 +76,26 @@ def find_pivots(df2, pivot_range, min_percentage_change):
     df2[f'LL_{pivot_range}'] = df2[f'LL_{pivot_range}'].ffill()
     df2[f'LH_{pivot_range}'] = df2[f'LH_{pivot_range}'].ffill()
     df2[f'HL_{pivot_range}'] = df2[f'HL_{pivot_range}'].ffill()
+
+    df2[f'HH_{pivot_range}_shift'] = df2.loc[df2[f'pivot_{pivot_range}'] ==3, 'pivotprice' ].shift(1)
+    df2[f'LL_{pivot_range}_shift'] = df2.loc[df2[f'pivot_{pivot_range}'] ==4, 'pivotprice' ].shift(1)
+    df2[f'LH_{pivot_range}_shift'] = df2.loc[df2[f'pivot_{pivot_range}'] ==5, 'pivotprice' ].shift(1)
+    df2[f'HL_{pivot_range}_shift'] = df2.loc[df2[f'pivot_{pivot_range}'] ==6, 'pivotprice' ].shift(1)
+
+    df2[f'HH_{pivot_range}_shift'] = df2[f'HH_{pivot_range}_shift'].ffill()
+    df2[f'LL_{pivot_range}_shift'] = df2[f'LL_{pivot_range}_shift'].ffill()
+    df2[f'LH_{pivot_range}_shift'] = df2[f'LH_{pivot_range}_shift'].ffill()
+    df2[f'HL_{pivot_range}_shift'] = df2[f'HL_{pivot_range}_shift'].ffill()
+
+    df2[f'HH_{pivot_range}_idx_shift'] = df2.loc[df2[f'pivot_{pivot_range}'] ==3, 'idxx' ].shift(1)
+    df2[f'LL_{pivot_range}_idx_shift'] = df2.loc[df2[f'pivot_{pivot_range}'] ==4, 'idxx' ].shift(1)
+    df2[f'LH_{pivot_range}_idx_shift'] = df2.loc[df2[f'pivot_{pivot_range}'] ==5, 'idxx' ].shift(1)
+    df2[f'HL_{pivot_range}_idx_shift'] = df2.loc[df2[f'pivot_{pivot_range}'] ==6, 'idxx' ].shift(1)
+
+    df2[f'HH_{pivot_range}_idx_shift'] = df2[f'HH_{pivot_range}_idx_shift'].ffill()
+    df2[f'LL_{pivot_range}_idx_shift'] = df2[f'LL_{pivot_range}_idx_shift'].ffill()
+    df2[f'LH_{pivot_range}_idx_shift'] = df2[f'LH_{pivot_range}_idx_shift'].ffill()
+    df2[f'HL_{pivot_range}_idx_shift'] = df2[f'HL_{pivot_range}_idx_shift'].ffill()
     
 
 
@@ -243,13 +263,14 @@ def find_pivots(df2, pivot_range, min_percentage_change):
                  f'fibo_global_1272_{pivot_range}_bear',f'fibo_global_1618_{pivot_range}_bear',f'fibo_local_1272_{pivot_range}_bear',f'fibo_local_1618_{pivot_range}_bear']]
 
     peaks = df2[[f'HH_{pivot_range}',f'HL_{pivot_range}',f'LL_{pivot_range}',f'LH_{pivot_range}',
+                 f'HH_{pivot_range}_shift',f'HL_{pivot_range}_shift',f'LL_{pivot_range}_shift',f'LH_{pivot_range}_shift',
                  f'HH_{pivot_range}_idx',f'HL_{pivot_range}_idx',f'LL_{pivot_range}_idx',f'LH_{pivot_range}_idx',
                  f'price_action_bull_{pivot_range}',f'price_action_bear_{pivot_range}',
                  f'last_high_{pivot_range}', f'last_low_{pivot_range}', f'pivot_{pivot_range}']]
 
     
 
-    ob_bull_cond = (df2[f'pivot_{pivot_range}'] == 4) | (df2[f'pivot_{pivot_range}'] == 6)
+    ob_bull_cond =  (df2[f'pivot_{pivot_range}'] == 6)
     bullish_ob = df2.loc[ob_bull_cond, ['pivotprice', 'pivot_body', 'idxx','time']]
 
     ob_bear_cond = (df2[f'pivot_{pivot_range}'] == 3) | (df2[f'pivot_{pivot_range}'] == 5) 
@@ -540,7 +561,7 @@ def invalidate_zones_by_candle_extremes(
     bearish_zones_df = bearish_zones_df.copy()
 
     # Zapewnij int w idx_col
-    ohlcv_df[idx_col] = ohlcv_df[idx_col].astype(int)
+    ohlcv_df[idx_col] = ohlcv_df[idx_col].ffill().astype(int)
     bullish_zones_df[idx_col] = bullish_zones_df[idx_col].astype(int)
     bearish_zones_df[idx_col] = bearish_zones_df[idx_col].astype(int)
 
@@ -573,9 +594,9 @@ def invalidate_zones_by_candle_extremes(
             time_candidates = ohlcv_time[mask]
 
             if cmp_op == 'lt':
-                breaches = np.where(candle_candidates < boundary)[0]
+                breaches = np.where(candle_candidates <= boundary)[0]
             else:
-                breaches = np.where(candle_candidates > boundary)[0]
+                breaches = np.where(candle_candidates >= boundary)[0]
 
             if len(breaches) > 0:
                 validate_till[i] = idx_candidates[breaches[0]]
@@ -599,8 +620,9 @@ def invalidate_zones_by_candle_extremes(
     bearish_zones_df.loc[bearish_na.index, 'validate_till'] = bearish_validate
 
     # Upewnij się, że validate_till_time ma typ datetime z UTC
-    bullish_zones_df['validate_till_time'] = pd.to_datetime(bullish_zones_df['validate_till_time'], utc=True, errors='coerce')
-    bearish_zones_df['validate_till_time'] = pd.to_datetime(bearish_zones_df['validate_till_time'], utc=True, errors='coerce')
+    for df in (bullish_zones_df, bearish_zones_df):
+        if not pd.api.types.is_datetime64tz_dtype(df['validate_till_time']):
+            df['validate_till_time'] = pd.to_datetime(df['validate_till_time'], utc=True, errors='coerce')
 
     # Przypisz validate_till_time tylko do brakujących wartości
     bullish_zones_df.loc[bullish_na.index, 'validate_till_time'] = pd.to_datetime(bullish_validate_time, utc=True)
@@ -634,8 +656,11 @@ def invalidate_zones_by_candle_extremes_next(
     bullish_zones_df = bullish_zones_df.copy()
     bearish_zones_df = bearish_zones_df.copy()
 
+
+
+
     # Zapewnij int w idx_col
-    ohlcv_df[idx_col] = ohlcv_df[idx_col].astype(int)
+    ohlcv_df[idx_col] = ohlcv_df[idx_col].ffill().astype(int)
     bullish_zones_df[idx_col] = bullish_zones_df[idx_col].astype(int)
     bearish_zones_df[idx_col] = bearish_zones_df[idx_col].astype(int)
 
@@ -722,73 +747,165 @@ def mark_zone_reactions(
     time_zone_col: str = None,
     always_create_breaker: bool = True
 ):
+    
+
     if timeframe == "aditional":
-        df.columns = [
-            col if col == 'time_H1' else col.replace('_H1', '')
-            for col in df.columns
-        ]
+        df = df.rename(columns={
+            'open_H1': 'open',
+            'high_H1': 'high',
+            'low_H1': 'low',
+            'close_H1': 'close',
+            'time_H1': 'time',
+            'idxx_H1': 'idxx'
+        })
+        time_df_col = 'time'  # <- Zmiana po renamowaniu
 
-    # Ciała świec
-    min_body_prev = df[['open', 'close']].min(axis=1).shift(1)
-    max_body_prev = df[['open', 'close']].max(axis=1).shift(1)
-    min_body_now = df[['open', 'close']].min(axis=1)
+    df[time_df_col] = make_datetime_naive(df[time_df_col])
+    zone_df[time_zone_col] = make_datetime_naive(zone_df[time_zone_col])
+    zone_df['validate_till_time'] = make_datetime_naive(zone_df['validate_till_time'])
+    
 
-    # Inicjalizacja kolumn wynikowych
-    reaction_col = pd.Series(False, index=df.index)
-    is_in_col = pd.Series(False, index=df.index)
-    low_boundary_col = pd.Series(np.nan, index=df.index, dtype=float)
-    high_boundary_col = pd.Series(np.nan, index=df.index, dtype=float)
+    if not isinstance(time_zone_col, str):
+        raise TypeError(f"time_zone_col musi być str, a nie {type(time_zone_col)}")
+    if not isinstance(time_df_col, str):
+        raise TypeError(f"time_df_col musi być str, a nie {type(time_df_col)}")
 
+    
+
+    # Ciała świec (z przesunięciem dla poprzedniej świecy)
+    min_body_prev = df[['open', 'close']].min(axis=1).shift(1).values  # numpy array
+    max_body_prev = df[['open', 'close']].max(axis=1).shift(1).values
+    min_body_now = df[['open', 'close']].min(axis=1).values
+
+    df_times = df[time_df_col].values
+    zone_start_times = zone_df[time_zone_col].values
+    zone_end_times = zone_df['validate_till_time'].fillna(pd.Timestamp.max).values
+    zone_low_bound = zone_df['low_boundary'].values
+    zone_high_bound = zone_df['high_boundary'].values
+
+    valid_till = zone_df['validate_till'].values
+
+    # Filter out zones where validate_till is NaN (ignored)
+    valid_zone_mask = ~pd.isna(valid_till)
+
+    # Przygotuj outputy - wszystkie False/NaN na start
+    reaction_col = np.zeros(len(df), dtype=bool)
+    is_in_col = np.zeros(len(df), dtype=bool)
+    low_boundary_col = np.full(len(df), np.nan)
+    high_boundary_col = np.full(len(df), np.nan)
+
+    # Zbierz breaker_blocks jako listę słowników (dopiero na końcu DataFrame)
     breaker_blocks = []
 
-    for _, row in zone_df.iterrows():
-        if pd.isna(row['validate_till']):
-            continue
+    # Wektorowo: Dla każdego df_time sprawdź dla każdej strefy czy czas jest w zakresie
+    # Tworzymy macierz (len(df) x len(zone_df))
 
-        # Zakres czasowy ważności strefy
-        valid_range = (df[time_df_col] > row[time_zone_col]) & (
-            (df[time_df_col] < row['validate_till_time']) | pd.isna(row['validate_till_time'])
-        )
+    time_cond = (df_times[:, None] > zone_start_times[None, :]) & (df_times[:, None] <= zone_end_times[None, :])
 
-        # Wytnij tylko ten zakres z df
-        df_slice = df.loc[valid_range]
+    # Odfiltruj strefy nieaktywne (np. validate_till NaN)
+    time_cond[:, ~valid_zone_mask] = False
 
-        # Reakcja na dolną i górną granicę
-        reaction_local = (
-            check_reaction(df_slice, row['low_boundary'], direction) |
-            check_reaction(df_slice, row['high_boundary'], direction)
-        )
+    # Jeśli żadna strefa, zwróć pustki
+    if time_cond.sum() == 0:
+        breaker_blocks_df = pd.DataFrame(columns=['high_boundary', 'low_boundary', 'idxx', time_zone_col, 'zone_type'])
+        if (zone_df['zone_type'] == 'ob').any():
+            return pd.Series(reaction_col, index=df.index), pd.Series(is_in_col, index=df.index), \
+                   pd.Series(low_boundary_col, index=df.index), pd.Series(high_boundary_col, index=df.index), \
+                   breaker_blocks_df
+        else:
+            return pd.Series(reaction_col, index=df.index), pd.Series(is_in_col, index=df.index), \
+                   pd.Series(low_boundary_col, index=df.index), pd.Series(high_boundary_col, index=df.index)
 
-        # Czy świeca jest wewnątrz strefy
-        is_in_zone_local = (
-            (min_body_prev[valid_range] < row['high_boundary']) &
-            (min_body_now[valid_range] > row['low_boundary'])
-        )
+    # Funkcja wektorowa do sprawdzenia reakcji (przykładowa, musisz dopasować do swojej implementacji)
+    def vector_check_reaction(prices, boundary, direction):
+        # np. zwraca bool array czy reakcja wystąpiła
+        if direction == 'long':
+            return prices >= boundary
+        else:
+            return prices <= boundary
 
-        # Przypisz wartości tylko do ograniczonego zakresu
-        reaction_col.loc[df_slice.index[reaction_local]] = True
-        is_in_col.loc[df_slice.index[is_in_zone_local]] = True
+    # Sprawdzamy reakcje dla low i high boundary we wszystkich strefach (macierze)
+    # powiedzmy, że "prices" to df['high'] i df['low'] (można też dostosować do Twojej funkcji)
+    # W oryginale było check_reaction(df_slice, boundary, direction)
+    # tutaj zamienimy na proste porównania (dopasuj do swojego check_reaction!)
 
-        low_boundary_col.loc[df_slice.index[reaction_local | is_in_zone_local]] = row['low_boundary']
-        high_boundary_col.loc[df_slice.index[reaction_local | is_in_zone_local]] = row['high_boundary']
+    # Pobierz ceny do wektorowego sprawdzenia (len(df) x 1)
+    high_prices = df['high'].values[:, None]
+    low_prices = df['low'].values[:, None]
 
-        # Dodaj breaker (opcjonalnie)
-        if always_create_breaker:
+    reaction_low = vector_check_reaction(low_prices, zone_low_bound[None, :], direction)
+    reaction_high = vector_check_reaction(high_prices, zone_high_bound[None, :], direction)
+
+    # Reakcja to OR z low i high reaction, ale tylko w czasie ważności strefy
+    reaction_matrix = time_cond & (reaction_low | reaction_high)
+
+    # Sprawdzenie, czy świeca jest wewnątrz strefy (porównanie ciał świec z granicami)
+    is_in_matrix = time_cond & (
+        (min_body_prev[:, None] <= zone_high_bound[None, :]) &
+        (min_body_now[:, None] >= zone_low_bound[None, :])
+    )
+
+    # Teraz dla każdej świecy trzeba oznaczyć czy jest reakcja / jest w strefie, oraz przypisać granice
+
+    # Zamień macierze na 1D tablice: jeśli w którejkolwiek strefie świeca ma reakcję lub jest w strefie
+    reaction_any = reaction_matrix.any(axis=1)
+    is_in_any = is_in_matrix.any(axis=1)
+
+    # Dla przypisania low/high boundary - bierzemy *pierwszą* strefę, gdzie jest reakcja lub jest wewnątrz
+    # (możesz zmodyfikować logikę według potrzeb)
+
+    # Znajdź indeksy pierwszych stref spełniających warunek dla każdej świecy
+    def first_true_idx(bool_2d_array):
+        idx = np.argmax(bool_2d_array, axis=1)
+        mask = bool_2d_array.any(axis=1)
+        idx[~mask] = -1
+        return idx
+
+    idx_reaction = first_true_idx(reaction_matrix)
+    idx_in_zone = first_true_idx(is_in_matrix)
+
+    # Ustaw kolumny granic - tam gdzie reakcja lub jest w strefie
+    valid_idx = (idx_reaction != -1)
+    low_boundary_col[valid_idx] = zone_low_bound[idx_reaction[valid_idx]]
+    high_boundary_col[valid_idx] = zone_high_bound[idx_reaction[valid_idx]]
+
+    valid_idx_in = (idx_in_zone != -1)
+    # Tu rozszerzamy granice jeśli są w strefie, ale nie były reakcją
+    update_idx = valid_idx_in & (~valid_idx)
+    low_boundary_col[update_idx] = zone_low_bound[idx_in_zone[update_idx]]
+    high_boundary_col[update_idx] = zone_high_bound[idx_in_zone[update_idx]]
+
+    # Ustaw kolumny reakcji i is_in
+    reaction_col = reaction_any
+    is_in_col = is_in_any
+
+    # Tworzenie breaker_blocks jeśli always_create_breaker=True
+    if always_create_breaker:
+        for i, valid in enumerate(valid_zone_mask):
+            if not valid:
+                continue
             breaker_blocks.append({
-                'high_boundary': row['high_boundary'],
-                'low_boundary': row['low_boundary'],
-                'idxx': int(row['validate_till']),
-                time_zone_col: row['validate_till_time'],
+                'high_boundary': zone_high_bound[i],
+                'low_boundary': zone_low_bound[i],
+                'idxx': int(valid_till[i]),
+                time_zone_col: zone_end_times[i],
                 'zone_type': 'breaker'
             })
 
-    # Breaker DataFrame
-    breaker_blocks_df = pd.DataFrame(breaker_blocks).sort_values(by='idxx')
-
-    if (zone_df['zone_type'] == 'ob').any():
-        return reaction_col, is_in_col, low_boundary_col, high_boundary_col, breaker_blocks_df
+    breaker_blocks_df = pd.DataFrame(breaker_blocks)
+    if not breaker_blocks_df.empty and 'idxx' in breaker_blocks_df.columns:
+        breaker_blocks_df = breaker_blocks_df.sort_values(by='idxx')
     else:
-        return reaction_col, is_in_col, low_boundary_col, high_boundary_col
+        breaker_blocks_df = pd.DataFrame(columns=['high_boundary', 'low_boundary', 'idxx', time_zone_col, 'zone_type'])
+
+    # Zwracanie wyników
+    if (zone_df['zone_type'] == 'ob').any():
+        return pd.Series(reaction_col, index=df.index), pd.Series(is_in_col, index=df.index), \
+               pd.Series(low_boundary_col, index=df.index), pd.Series(high_boundary_col, index=df.index), \
+               breaker_blocks_df
+    else:
+        return pd.Series(reaction_col, index=df.index), pd.Series(is_in_col, index=df.index), \
+               pd.Series(low_boundary_col, index=df.index), pd.Series(high_boundary_col, index=df.index)
     
 
 
@@ -856,8 +973,7 @@ def diff_percentage(v2, v1) -> float:
 
 def calculate_monday_high_low(df, timezone='UTC'):
     df = df.copy()
-    df['time'] = pd.to_datetime(df['time'])
-    df['time'] = df['time'].dt.tz_convert('UTC') if df['time'].dt.tz is not None else df['time'].dt.tz_localize('UTC')
+    df['time'] = pd.to_datetime(df['time'], utc=True)
     df['date'] = df['time'].dt.date
     df['weekday'] = df['time'].dt.weekday  # Monday = 0
     df['week'] = df['time'].dt.isocalendar().week
@@ -917,4 +1033,10 @@ def detect_equal_extreme(df, pivot_col: str, atr_col: str, direction='bearish', 
                 mask.at[idx] = True
 
     return mask
+
+def make_datetime_naive(series_or_df_column):
+    """Usuwa strefę czasową z daty, jeśli istnieje"""
+    if hasattr(series_or_df_column.dt, 'tz') and series_or_df_column.dt.tz is not None:
+        return series_or_df_column.dt.tz_localize(None)
+    return series_or_df_column
 

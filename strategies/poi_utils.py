@@ -10,13 +10,17 @@ def _prepare_dataframe(self):
     if 'time_x' in df.columns:
         df.rename(columns={'time_x': 'time'}, inplace=True)
 
-    peaks, fibos, bullish_ob, bearish_ob = myTA.find_pivots(df, 15, min_percentage_change=0.00001)
-    df = pd.concat([df, peaks, fibos], axis=1)
+    fibos5, peaks5, bullish_ob5, bearish_ob5 = myTA.find_pivots(df, 5, min_percentage_change=0.00001)
+
+    fibos, peaks,  bullish_ob, bearish_ob = myTA.find_pivots(df, 15, min_percentage_change=0.00001)
+    df = pd.concat([df, peaks, fibos, peaks5], axis=1)
     heikinashi = qtpylib.heikinashi(df)
     df[['ha_open', 'ha_close', 'ha_high', 'ha_low']] = heikinashi[['open', 'close', 'high', 'low']]
     self.df = df
     self.bullish_ob = bullish_ob
     self.bearish_ob = bearish_ob
+
+
 
 def _calculate_indicators(self):
     df = self.df
@@ -128,7 +132,7 @@ def _mark_fibo_reactions_all(self):
 
 def _detect_and_validate_zones(self):
     df = self.df
-    bullish_fvg, bearish_fvg = myTA.detect_fvg(df, 1.5)
+    bullish_fvg, bearish_fvg = myTA.detect_fvg(df, 2)
     bullish_gap, bearish_gap = myTA.detect_gaps(df, 0.002)
 
     # Label zone types
@@ -199,8 +203,8 @@ def _process_higher_timeframe_zones(self):
 
     def process_zone(zone_name):
         result = myTA.mark_zone_reactions(
-            "aditional", df_H1, getattr(self, zone_name), zone_name.split('_')[0], 'time_H1', 'time'
-        )
+        "aditional", df_H1, getattr(self, zone_name), zone_name.split('_')[0], 'time', 'time'
+    )
 
         # Uprość nazwę, np. 'bullish_fvg'
         simple_zone_name = '_'.join(zone_name.split('_')[:2])
@@ -251,6 +255,13 @@ def _process_higher_timeframe_zones(self):
     df['bearish_breaker_is_in_H1'] = bearish_result[1]
     df['bearish_breaker_low_H1'] = bearish_result[2]
     df['bearish_breaker_high_H1'] = bearish_result[3]
+
+    # Shiftuj odpowiednie kolumny o 1
+    for col in df.columns:
+        if any(prefix in col for prefix in ['bullish_', 'bearish_']) and \
+           any(zone in col for zone in ['fvg', 'ob', 'breaker']) and \
+           any(suffix in col for suffix in ['is_in_H1', 'reaction_H1', 'low_H1', 'high_H1']):
+            df[col] = df[col].shift(12)
 
 def _mark_sweeps(self):
     df = self.df
@@ -336,6 +347,18 @@ def _mark_sweeps(self):
         (myTA.check_reaction(df, df['LL_15'], 'bullish') ) |
         (myTA.check_reaction(df, df['HL_15'], 'bullish') & (df['LL_15_idx'] < df['HL_15_idx']))
     )
+
+    df['bullish_sr_flip'] = (
+        (myTA.check_reaction(df, df['HH_15'], 'bullish') ) |
+        (myTA.check_reaction(df, df['LH_15'], 'bullish') ) |
+        (myTA.check_reaction(df, df['HH_15_shift'], 'bullish') ) |
+        (myTA.check_reaction(df, df['LH_15_shift'], 'bullish') )|
+
+        (myTA.check_reaction(df, df['HH_15_H1'], 'bullish') ) |
+        (myTA.check_reaction(df, df['LH_15_H1'], 'bullish') ) |
+        (myTA.check_reaction(df, df['HH_15_shift_H1'], 'bullish') ) |
+        (myTA.check_reaction(df, df['LH_15_shift_H1'], 'bullish') ) )
+    
 
     df['bearish_lqs'] = (
         (myTA.check_reaction(df, df['HH_15'], 'bearish') ) |

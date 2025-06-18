@@ -92,9 +92,10 @@ def _vectorized_backtest_single_symbol(df: pd.DataFrame, symbol: str, slippage: 
             tp1_executed = False
             tp1_exit_reason = None
             pnl_total = 0
-            update_sl_next_bar = False
+            
             tp1_pnl = None
 
+            update_sl_next_bar = False
             for i in range(entry_pos + 1, len(df)):
                 row = df.iloc[i]
                 price_high = row['high']

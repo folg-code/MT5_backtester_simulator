@@ -1,0 +1,15 @@
+{
+    "GPG_H1_GPL_H1": {
+        "symbol": "USDCAD",
+        "trade_id": 3970225062,
+        "open_price": 1.36864,
+        "entry_time": "2025-06-18T18:50:05.828063",
+        "direction": "long",
+        "sl": 1.3661424744579755,
+        "tp1": 1.3707099999999999,
+        "tp": 1.3707099999999999,
+        "volume": 1.0,
+        "tp1_closed": false,
+        "tp2_closed": false
+    }
+}

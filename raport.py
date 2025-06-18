@@ -11,7 +11,7 @@ def compute_equity(trades_df, starting_capital=config.INITIAL_BALANCE):
 
 
     trades['pnl_points'] = trades['pnl']
-    trades['pnl_usd'] = trades['pnl_points'] * (trades['position_size'] / trades['entry_price'])
+    trades['pnl_usd'] = (trades['pnl_points'] * (trades['position_size'] / trades['entry_price'])) * config.INITIAL_SIZE * 100000
     trades['capital'] = starting_capital + trades['pnl_usd'].cumsum()
 
     return trades
@@ -51,7 +51,7 @@ def summarize_group(df, group_name="TOTAL"):
     return [
         group_name,
         total_trades,
-        round(avg_profit_pct, 2),
+        round(avg_profit_pct, 4),
         round(total_profit, 3),
         round(total_return_pct, 2),
         format_duration(avg_duration),

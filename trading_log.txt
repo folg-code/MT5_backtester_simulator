@@ -1,44 +1,39 @@
-2025-06-17 10:40:44,355 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:40:45,356 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:40:46,357 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:40:47,358 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:40:48,359 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:40:49,360 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:40:50,361 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:40:51,362 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:40:52,363 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:40:53,364 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:41:06,166 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:41:07,166 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:41:08,168 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:41:09,169 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:41:10,170 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:41:11,171 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:41:12,172 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:41:13,173 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:41:14,174 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:41:15,174 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:41:16,175 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:41:17,176 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:43:44,799 - Zlecenie BUY nieudane: 10027
-2025-06-17 10:43:49,802 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:43:50,803 - Zlecenie BUY nieudane: 10027
-2025-06-17 10:43:55,806 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:43:56,806 - Zlecenie BUY nieudane: 10027
-2025-06-17 10:46:55,047 - Zlecenie BUY nieudane: 10027 | OrderSendResult(retcode=10027, deal=0, order=0, volume=0.0, price=0.0, bid=0.0, ask=0.0, comment='AutoTrading disabled by client', request_id=0, retcode_external=0, request=TradeRequest(action=1, magic=123456, order=0, symbol='USDJPY', volume=0.1, price=144.819, stoplimit=0.0, sl=0.0, tp=0.0, deviation=20, type=0, type_filling=1, type_time=0, expiration=0, comment='BUY z Python', position=0, position_by=0))
-2025-06-17 10:47:00,050 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:47:01,051 - Zlecenie BUY nieudane: 10027 | OrderSendResult(retcode=10027, deal=0, order=0, volume=0.0, price=0.0, bid=0.0, ask=0.0, comment='AutoTrading disabled by client', request_id=0, retcode_external=0, request=TradeRequest(action=1, magic=123456, order=0, symbol='USDJPY', volume=0.1, price=144.82, stoplimit=0.0, sl=0.0, tp=0.0, deviation=20, type=0, type_filling=1, type_time=0, expiration=0, comment='BUY z Python', position=0, position_by=0))
-2025-06-17 10:47:43,550 - Zlecenie BUY nieudane: 10027 | OrderSendResult(retcode=10027, deal=0, order=0, volume=0.0, price=0.0, bid=0.0, ask=0.0, comment='AutoTrading disabled by client', request_id=0, retcode_external=0, request=TradeRequest(action=1, magic=123456, order=0, symbol='USDJPY', volume=0.1, price=144.846, stoplimit=0.0, sl=0.0, tp=0.0, deviation=20, type=0, type_filling=2, type_time=0, expiration=0, comment='BUY z Python', position=0, position_by=0))
-2025-06-17 10:47:48,553 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:47:49,554 - Zlecenie BUY nieudane: 10027 | OrderSendResult(retcode=10027, deal=0, order=0, volume=0.0, price=0.0, bid=0.0, ask=0.0, comment='AutoTrading disabled by client', request_id=0, retcode_external=0, request=TradeRequest(action=1, magic=123456, order=0, symbol='USDJPY', volume=0.1, price=144.846, stoplimit=0.0, sl=0.0, tp=0.0, deviation=20, type=0, type_filling=2, type_time=0, expiration=0, comment='BUY z Python', position=0, position_by=0))
-2025-06-17 10:47:54,557 - Nie uda≥o siÍ zamknπÊ pozycji #3954482048: 10027
-2025-06-17 10:50:41,848 - Zlecenie BUY nieudane: 10027 | OrderSendResult(retcode=10027, deal=0, order=0, volume=0.0, price=0.0, bid=0.0, ask=0.0, comment='AutoTrading disabled by client', request_id=0, retcode_external=0, request=TradeRequest(action=1, magic=123456, order=0, symbol='USDJPY', volume=0.1, price=144.818, stoplimit=0.0, sl=0.0, tp=0.0, deviation=20, type=0, type_filling=2, type_time=0, expiration=0, comment='BUY z Python', position=0, position_by=0))
-2025-06-17 10:51:44,344 - Zlecenie BUY zrealizowane: #3958297325
-2025-06-17 10:51:49,397 - ZamkniÍto pozycjÍ #3954482048 (BUY) z zyskiem -241.00
-2025-06-17 10:51:49,449 - ZamkniÍto pozycjÍ #3958297325 (BUY) z zyskiem -2.14
-2025-06-17 10:51:50,500 - Zlecenie BUY zrealizowane: #3958297910
-2025-06-17 10:51:55,552 - ZamkniÍto pozycjÍ #3958297910 (BUY) z zyskiem -1.38
-2025-06-17 10:51:56,605 - Zlecenie BUY zrealizowane: #3958298475
-2025-06-17 10:52:59,996 - Zlecenie BUY zrealizowane: #3958303113
-2025-06-17 10:54:22,001 - Zlecenie BUY zrealizowane: #3958310366
-2025-06-17 10:54:28,215 - Zlecenie BUY zrealizowane: #3958310864
+
+‚úÖ MetaTrader5 zainicjalizowany.
+start
+end prepare_strategies
+Live trading started...
+NEW LOOP
+NEW LOOP
+NEW LOOP
+üõå Zatrzymano przez u≈ºytkownika
+üì¥ Po≈ÇƒÖczenie z MetaTrader5 zosta≈Ço zamkniƒôte.
+‚¨ÖÔ∏è Nowy sygna≈Ç wyj≈õcia dla GBPUSD: kierunek=long, tagi=['FVG', 'OB'], pow√≥d=bearish_lqs
+‚¨ÖÔ∏è Nowy sygna≈Ç wyj≈õcia dla GBPUSD: kierunek=long, tagi=['FVG', 'OB'], pow√≥d=bearish_lqs
+‚¨ÖÔ∏è Nowy sygna≈Ç wyj≈õcia dla GBPUSD: kierunek=long, tagi=['FVG', 'OB'], pow√≥d=bearish_lqs
+‚¨ÖÔ∏è Nowy sygna≈Ç wyj≈õcia dla GBPUSD: kierunek=long, tagi=['FVG', 'OB'], pow√≥d=bearish_lqs
+‚¨ÖÔ∏è Nowy sygna≈Ç wyj≈õcia dla GBPUSD: kierunek=long, tagi=['FVG', 'OB'], pow√≥d=bearish_lqs
+‚û°Ô∏è Nowy sygna≈Ç wej≈õcia dla USDCAD: kierunek=long, tag=GPG_H1_GPL_H1
+('long', 'GPG_H1_GPL_H1')
+(('SL', 1.3661424744579755, 'SL_sl_atr_GPG_H1_GPL_H1'), ('TP', 1.3691250510840487, 'TP1_TP1_ATR'), ('TP', 1.3707099999999999, 'TP2_double_HH_15'))
+üìç USDCAD | LONG | Cena rynkowa: 1.36836 | Cena sygna≈Çu: 1.36775| GPG_H1_GPL_H1 | CZAS SYGNA≈ÅU: 2025-06-18 18:50:00+00:00 
+üü® Kandydat SL: 1.36609, TP: 1.37076
+üîé Dystans SL od row[close].iloc[-1]: 0.00166, TP: 0.00301 | Min wymagany dystans: 0.00005
+üîé Dystans SL od order_price.ask: 0.00255, TP: 0.00212 | Min wymagany dystans: 0.00005
+üîé Dystans SL od order_price.bid: 0.00227, TP: 0.00240 | Min wymagany dystans: 0.00005
+‚ö†Ô∏è final SL: 1.36609 ‚ö†Ô∏è final TP: 1.37076
+OrderSendResult(retcode=10009, deal=3919086100, order=3970225062, volume=1.0, price=1.36864, bid=1.36836, ask=1.36864, comment='Request executed', request_id=41487777, retcode_external=0, request=TradeRequest(action=1, magic=234000, order=0, symbol='USDCAD', volume=1.0, price=1.36864, stoplimit=0.0, sl=1.36609, tp=1.3707600000000002, deviation=30, type=0, type_filling=1, type_time=0, expiration=0, comment='GPG_H1_GPL_H1', position=0, position_by=0))
+‚úÖ Otwarta pozycja long dla USDCAD po cenie 1.36864 z GPG_H1_GPL_H1 z TP: 1.3707099999999999, SL: 1.3661424744579755
+‚ö†Ô∏è Pozycja dla trade_id 3970225062 nie znaleziona na koncie MT5.
+‚û°Ô∏è Nowy sygna≈Ç wej≈õcia dla USDCAD: kierunek=long, tag=GPG_H1_GPL_H1
+('long', 'GPG_H1_GPL_H1')
+(('SL', 1.3661424744579755, 'SL_sl_atr_GPG_H1_GPL_H1'), ('TP', 1.3691250510840487, 'TP1_TP1_ATR'), ('TP', 1.3707099999999999, 'TP2_double_HH_15'))
+‚û°Ô∏è Nowy sygna≈Ç wej≈õcia dla USDCAD: kierunek=long, tag=GPG_H1_GPL_H1
+('long', 'GPG_H1_GPL_H1')
+(('SL', 1.3661424744579755, 'SL_sl_atr_GPG_H1_GPL_H1'), ('TP', 1.3691250510840487, 'TP1_TP1_ATR'), ('TP', 1.3707099999999999, 'TP2_double_HH_15'))
+‚û°Ô∏è Nowy sygna≈Ç wej≈õcia dla USDCAD: kierunek=long, tag=GPG_H1_GPL_H1
+('long', 'GPG_H1_GPL_H1')
+(('SL', 1.3661424744579755, 'SL_sl_atr_GPG_H1_GPL_H1'), ('TP', 1.3691250510840487, 'TP1_TP1_ATR'), ('TP', 1.3707099999999999, 'TP2_double_HH_15'))
+‚û°Ô∏è Nowy sygna≈Ç wej≈õcia dla USDCAD: kierunek=long, tag=GPG_H1_GPL_H1
+('long', 'GPG_H1_GPL_H1')
+(('SL', 1.3661424744579755, 'SL_sl_atr_GPG_H1_GPL_H1'), ('TP', 1.3691250510840487, 'TP1_TP1_ATR'), ('TP', 1.3707099999999999, 'TP2_double_HH_15'))

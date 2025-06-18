@@ -5,11 +5,11 @@ import MetaTrader5 as mt5
 strategy = "POI"
 
 # === Parametry rynku ===
-SYMBOLS = [ 'EURUSD', 'USDJPY', 'XAUUSD', 'AUDNZD']
+SYMBOLS = [ 'EURUSD', 'USDJPY', 'XAUUSD', 'AUDNZD', 'GBPUSD', 'USDCHF','USDCAD', 'AUDUSD']
 TIMEFRAME = 'M5'
 TIMERANGE = {
-    'start': '2025-02-12',
-    'end': '2025-06-12'
+    'start': '2025-05-12',
+    'end': '2025-06-19'
 }
 # === Kapitał początkowy ===
 INITIAL_BALANCE = 100_000.0  # USD
@@ -17,7 +17,7 @@ INITIAL_BALANCE = 100_000.0  # USD
 SLIPPAGE = 0.000
 SL_PCT = 0.005    # SL = 0.1%
 TP_PCT = 0.025    # TP = 0.2%s
-INITIAL_SIZE = 1.0 * INITIAL_BALANCE
+INITIAL_SIZE = 1.0 
 MAX_SIZE = 3.0
 SINGLE_POSIOTION_MODE = True
 
